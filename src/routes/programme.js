@@ -7,7 +7,7 @@ const auth = require('../middleware/auth');
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // YouTube video IDs for exercises
-const YOUTUBE_VIDEOS = [
+const YOUTUBE_VIDEOS_HOMME = [
   // POITRINE
   { keys: ['développé couché', 'bench press', 'développé plat'], id: 'vcBig73ojpE' },
   { keys: ['développé incliné', 'incline press', 'incliné haltères'], id: '8iPEnn-ltC8' },
@@ -18,8 +18,8 @@ const YOUTUBE_VIDEOS = [
   { keys: ['développé militaire', 'overhead press', 'military press', 'shoulder press'], id: 'qEwKCR5JCog' },
   { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: '3VcKaXpzqRo' },
   { keys: ['élévation frontale', 'front raise'], id: 'sOkWMWhMkCY' },
-  { keys: ['oiseau', 'rear delt', 'face pull', 'arrière épaule', 'oiseau haltères'], id: 'rep-qVOkqgk' },
-  { keys: ['upright row', 'tirage menton', 'rowing menton'], id: '4AHqDMgGXTo' },
+  { keys: ['oiseau', 'rear delt', 'face pull', 'arrière épaule'], id: 'rep-qVOkqgk' },
+  { keys: ['tirage menton', 'rowing menton', 'upright row'], id: '4AHqDMgGXTo' },
   // TRICEPS
   { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps'], id: '2-LAMcpzODU' },
   { keys: ['dips', 'barre parallèle', 'parallèles'], id: 'yTMGMmVkLMo' },
@@ -35,14 +35,13 @@ const YOUTUBE_VIDEOS = [
   { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: 'op9kVnSso6Q' },
   { keys: ['good morning', 'hyperextension', 'extension lombaire'], id: '4e5DXBJ4p40' },
   // BICEPS
-  { keys: ['curl barre', 'curl biceps barre', 'barbell curl'], id: 'kwG2ipFRgfo' },
+  { keys: ['curl barre', 'curl biceps barre', 'barbell curl', 'curl barre ez', 'ez bar', 'barre ez'], id: 'kwG2ipFRgfo' },
   { keys: ['curl haltères', 'curl alternés', 'dumbbell curl'], id: 'sAq_ocpRh_I' },
   { keys: ['curl marteau', 'hammer curl', 'prise neutre'], id: 'zC3nLlEvin4' },
   { keys: ['curl concentré', 'concentration curl'], id: '0AUGkch3tzc' },
   { keys: ['curl câble', 'curl poulie'], id: 'NFzTWp2qpiE' },
-  { keys: ['curl barre ez', 'ez bar', 'barre ez'], id: 'kwG2ipFRgfo' },
   // JAMBES
-  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'U3HlEF_E9fo' },
+  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'ultWZbUMPL8' },
   { keys: ['presse à cuisses', 'leg press', 'presse jambes'], id: 'IZxyjW7MPJQ' },
   { keys: ['leg extension', 'extension quadriceps', 'extension jambe'], id: 'YyvSfVjQeL0' },
   { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl'], id: '1Tq3QdYUuHs' },
@@ -66,11 +65,68 @@ const YOUTUBE_VIDEOS = [
   { keys: ['corde à sauter', 'jump rope', 'sauter corde'], id: 'u3zgHI8QnqE' },
 ];
 
-function getYoutubeId(exerciseName) {
-  const name = exerciseName.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove accents for better matching
+const YOUTUBE_VIDEOS_FEMME = [
+  // FESSIERS / JAMBES (priorité pour les femmes)
+  { keys: ['hip thrust', 'fessiers pont', 'glute bridge', 'pont fessier'], id: 'jGNzDNmPuQY' },
+  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'aclHkVaku9U' },
+  { keys: ['sumo squat', 'sumo deadlift'], id: 'BE1EKz9OxCc' },
+  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant'], id: 'wrwwXE_x-pQ' },
+  { keys: ['leg press', 'presse à cuisses', 'presse jambes'], id: 'yZmx_Ac3880' },
+  { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl'], id: 'ELOCsoDSmrg' },
+  { keys: ['leg extension', 'extension quadriceps', 'extension jambe'], id: 'wJEN0ASZF4E' },
+  { keys: ['mollet', 'calf raise', 'élévation mollets', 'standing calf'], id: 'gwLzBJYoWlI' },
+  { keys: ['step up', 'montée genoux'], id: 'dQqApCGd5Ss' },
+  { keys: ['goblet squat'], id: 'o2KMqFGaVA0' },
+  { keys: ['donkey kick', 'coup de pied', 'abduction'], id: ''+'SdJNACSJBRc' },
+  { keys: ['fire hydrant', 'abduction hanche'], id: 'iy3fDnKFqw0' },
+  { keys: ['kickback fessier', 'extension hanche'], id: 'ELOCsoDSmrg' },
+  // DOS
+  { keys: ['tirage vertical', 'lat pulldown', 'tirage nuque', 'tirage poitrine'], id: 'JwxCMEqcuWQ' },
+  { keys: ['traction', 'pull up', 'pull-up', 'chin up'], id: 'p2_Fvzgs7Fc' },
+  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie'], id: 'UCXxvVItLoM' },
+  { keys: ['rowing haltère', 'rowing unilatéral', 'rowing un bras', 'one arm row'], id: 'lB2BytVOCsU' },
+  { keys: ['rowing barre', 'bent over row', 'rowing penché'], id: 'CZuBs5eFd_A' },
+  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: '_YgkZFMSI4s' },
+  { keys: ['pull over', 'pullover'], id: 'FK4rHfGAFlk' },
+  { keys: ['hyperextension', 'extension lombaire', 'good morning'], id: '4e5DXBJ4p40' },
+  // ÉPAULES
+  { keys: ['développé militaire', 'overhead press', 'shoulder press', 'military press'], id: 'qEwKCR5JCog' },
+  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: 'kDqklk1ZESo' },
+  { keys: ['élévation frontale', 'front raise'], id: 'sOkWMWhMkCY' },
+  { keys: ['face pull', 'oiseau', 'rear delt', 'arrière épaule'], id: 'rep-qVOkqgk' },
+  // POITRINE
+  { keys: ['développé couché', 'bench press', 'développé plat'], id: 'leEcDcP5a8c' },
+  { keys: ['développé incliné', 'incline press', 'incliné haltères'], id: 'L_BFLF_KFRI' },
+  { keys: ['écarté', 'fly', 'pec deck', 'butterfly'], id: 'eozdVDA78K0' },
+  { keys: ['pompe', 'push up', 'push-up'], id: 'IODxDxX7oi4' },
+  // BRAS
+  { keys: ['curl haltères', 'curl alternés', 'dumbbell curl', 'curl biceps'], id: 'sAq_ocpRh_I' },
+  { keys: ['curl marteau', 'hammer curl', 'prise neutre'], id: 'zC3nLlEvin4' },
+  { keys: ['curl barre', 'barbell curl', 'barre ez', 'ez bar'], id: 'kwG2ipFRgfo' },
+  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down'], id: '2-LAMcpzODU' },
+  { keys: ['dips', 'barre parallèle'], id: 'yTMGMmVkLMo' },
+  { keys: ['kickback triceps', 'kick back'], id: 'ZOJXcYHMKAg' },
+  // ABDOS / CORE
+  { keys: ['planche', 'plank', 'gainage'], id: 'dD_3GEpFUOA' },
+  { keys: ['crunch', 'abdominaux', 'sit up'], id: 'MKmrqcoCZ-M' },
+  { keys: ['russian twist', 'rotation tronc'], id: 'wkD8rjkodUI' },
+  { keys: ['relevé jambes', 'leg raise', 'relevé de jambes'], id: 'l4kQd9eWclE' },
+  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
+  // CARDIO / FULL BODY
+  { keys: ['burpee'], id: 'TU8QYVW0gDU' },
+  { keys: ['jumping jack', 'écart saut'], id: 'iSSAk4XCsRA' },
+  { keys: ['corde à sauter', 'jump rope', 'sauter corde'], id: 'u3zgHI8QnqE' },
+  { keys: ['box jump', 'saut boîte'], id: 'NBY9-kTuHEk' },
+  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
+];
 
-  for (const entry of YOUTUBE_VIDEOS) {
+function getYoutubeId(exerciseName, sexe) {
+  const name = exerciseName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const videoList = (sexe === 'femme') ? YOUTUBE_VIDEOS_FEMME : YOUTUBE_VIDEOS_HOMME;
+
+  for (const entry of videoList) {
     for (const key of entry.keys) {
       const normalizedKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       if (name.includes(normalizedKey) || normalizedKey.includes(name)) {
@@ -79,9 +135,9 @@ function getYoutubeId(exerciseName) {
     }
   }
 
-  // Fallback: try word-by-word matching
+  // Word-by-word fallback
   const words = name.split(' ').filter(w => w.length > 3);
-  for (const entry of YOUTUBE_VIDEOS) {
+  for (const entry of videoList) {
     for (const key of entry.keys) {
       const normalizedKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       for (const word of words) {
@@ -90,7 +146,6 @@ function getYoutubeId(exerciseName) {
     }
   }
 
-  // No match found - return null so we can hide the video
   return null;
 }
 
@@ -189,7 +244,7 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
         const data = JSON.parse(jsonMatch[0]);
         data.entrainement.seances.forEach(s => {
           s.exercices.forEach(e => {
-            e.youtubeId = getYoutubeId(e.nom);
+            e.youtubeId = getYoutubeId(e.nom, sexe);
           });
         });
 
