@@ -249,22 +249,28 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
         });
 
         // Save to DB
-        const semaine = db.prepare('SELECT COUNT(*) as count FROM programmes WHERE user_id=?').get(req.user.id).count + 1;
-        db.prepare('INSERT INTO programmes (user_id, semaine, data) VALUES (?,?,?)').run(req.user.id, semaine, JSON.stringify(data));
+        const countRow = await db.get2('SELECT COUNT(*) as count FROM programmes WHERE user_id=?', [req.user.id]);
+        const semaine = countRow.count + 1;
+        await db.run2('INSERT INTO programmes (user_id, semaine, data) VALUES (?,?,?)', [req.user.id, semaine, JSON.stringify(data)]);
 
         // Update user profile
-        db.prepare('UPDATE users SET age=?,poids=?,taille=?,sexe=?,objectif=?,niveau=?,jours=?,restrictions=? WHERE id=?')
-          .run(age, poids, taille, sexe, objectif, niveau, jours, restrictions, req.user.id);
+        await db.run2('UPDATE users SET age=?,poids=?,taille=?,sexe=?,objectif=?,niveau=?,jours=?,restrictions=? WHERE id=?',
+          [age, poids, taille, sexe, objectif, niveau, jours, restrictions, req.user.id]);
 
         // Init suivi for this week
-        const existingSuivi = db.prepare('SELECT id FROM suivi WHERE user_id=? AND semaine=?').get(req.user.id, semaine);
+        const existingSuivi = await db.get2('SELECT id FROM suivi WHERE user_id=? AND semaine=?', [req.user.id, semaine]);
         if (!existingSuivi) {
-          db.prepare('INSERT INTO suivi (user_id, semaine, poids, seances_total) VALUES (?,?,?,?)').run(req.user.id, semaine, poids, data.entrainement.seances.length);
+          await db.run2('INSERT INTO suivi (user_id, semaine, poids, seances_total) VALUES (?,?,?,?)',
+            [req.user.id, semaine, poids, data.entrainement.seances.length]);
         }
 
         res.write(`data: ${JSON.stringify({ done: true, programme: data, semaine })}\n\n`);
+      } else {
+        console.error('No JSON found in response');
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       }
     } catch (parseErr) {
+      console.error('Parse/DB error:', parseErr);
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     }
 
@@ -276,57 +282,58 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
 });
 
 // GET ALL PROGRAMMES
-router.get('/', auth, (req, res) => {
-  const programmes = db.prepare('SELECT id, semaine, created_at FROM programmes WHERE user_id=? ORDER BY semaine DESC').all(req.user.id);
+router.get('/', auth, async (req, res) => {
+  const programmes = await db.all2('SELECT id, semaine, created_at FROM programmes WHERE user_id=? ORDER BY semaine DESC', [req.user.id]);
   res.json(programmes);
 });
 
 // GET SPECIFIC PROGRAMME
-router.get('/:id', auth, (req, res) => {
-  const prog = db.prepare('SELECT * FROM programmes WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
+router.get('/:id', auth, async (req, res) => {
+  const prog = await db.get2('SELECT * FROM programmes WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
   if (!prog) return res.status(404).json({ error: 'Programme non trouvé' });
   prog.data = JSON.parse(prog.data);
   res.json(prog);
 });
 
 // GET LATEST PROGRAMME
-router.get('/latest/current', auth, (req, res) => {
-  const prog = db.prepare('SELECT * FROM programmes WHERE user_id=? ORDER BY created_at DESC LIMIT 1').get(req.user.id);
+router.get('/latest/current', auth, async (req, res) => {
+  const prog = await db.get2('SELECT * FROM programmes WHERE user_id=? ORDER BY created_at DESC LIMIT 1', [req.user.id]);
   if (!prog) return res.status(404).json({ error: 'Aucun programme' });
   prog.data = JSON.parse(prog.data);
   res.json(prog);
 });
 
 // UPDATE SUIVI HEBDO
-router.post('/suivi', auth, (req, res) => {
+router.post('/suivi', auth, async (req, res) => {
   const { semaine, poids, calories_avg, seances_faites, notes } = req.body;
-  const existing = db.prepare('SELECT id FROM suivi WHERE user_id=? AND semaine=?').get(req.user.id, semaine);
+  const existing = await db.get2('SELECT id FROM suivi WHERE user_id=? AND semaine=?', [req.user.id, semaine]);
   if (existing) {
-    db.prepare('UPDATE suivi SET poids=?,calories_avg=?,seances_faites=?,notes=? WHERE user_id=? AND semaine=?')
-      .run(poids, calories_avg, seances_faites, notes, req.user.id, semaine);
+    await db.run2('UPDATE suivi SET poids=?,calories_avg=?,seances_faites=?,notes=? WHERE user_id=? AND semaine=?',
+      [poids, calories_avg, seances_faites, notes, req.user.id, semaine]);
   } else {
-    db.prepare('INSERT INTO suivi (user_id,semaine,poids,calories_avg,seances_faites,notes) VALUES (?,?,?,?,?,?)')
-      .run(req.user.id, semaine, poids, calories_avg, seances_faites, notes);
+    await db.run2('INSERT INTO suivi (user_id,semaine,poids,calories_avg,seances_faites,notes) VALUES (?,?,?,?,?,?)',
+      [req.user.id, semaine, poids, calories_avg, seances_faites, notes]);
   }
   res.json({ success: true });
 });
 
 // LOG SEANCE COMPLETEE
-router.post('/seance-log', auth, (req, res) => {
+router.post('/seance-log', auth, async (req, res) => {
   const { semaine, jour, type_seance, completee } = req.body;
-  const existing = db.prepare('SELECT id FROM seances_log WHERE user_id=? AND semaine=? AND jour=?').get(req.user.id, semaine, jour);
+  const existing = await db.get2('SELECT id FROM seances_log WHERE user_id=? AND semaine=? AND jour=?', [req.user.id, semaine, jour]);
   if (existing) {
-    db.prepare('UPDATE seances_log SET completee=? WHERE id=?').run(completee ? 1 : 0, existing.id);
+    await db.run2('UPDATE seances_log SET completee=? WHERE id=?', [completee ? 1 : 0, existing.id]);
   } else {
-    db.prepare('INSERT INTO seances_log (user_id,semaine,jour,type_seance,completee) VALUES (?,?,?,?,?)').run(req.user.id, semaine, jour, type_seance, completee ? 1 : 0);
+    await db.run2('INSERT INTO seances_log (user_id,semaine,jour,type_seance,completee) VALUES (?,?,?,?,?)',
+      [req.user.id, semaine, jour, type_seance, completee ? 1 : 0]);
   }
   res.json({ success: true });
 });
 
 // GET SUIVI HISTORY
-router.get('/suivi/history', auth, (req, res) => {
-  const suivi = db.prepare('SELECT * FROM suivi WHERE user_id=? ORDER BY semaine ASC').all(req.user.id);
-  const seances = db.prepare('SELECT * FROM seances_log WHERE user_id=? ORDER BY semaine ASC').all(req.user.id);
+router.get('/suivi/history', auth, async (req, res) => {
+  const suivi = await db.all2('SELECT * FROM suivi WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
+  const seances = await db.all2('SELECT * FROM seances_log WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
   res.json({ suivi, seances });
 });
 

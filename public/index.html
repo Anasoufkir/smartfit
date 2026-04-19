@@ -1002,33 +1002,44 @@ async function generateProgramme() {
       body: JSON.stringify({ nom: user.nom, age, poids, taille, sexe, objectif, niveau, jours, restrictions })
     });
 
-    if (!response.ok) { toast('Erreur génération','err'); return; }
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      toast(errData.error || 'Erreur génération', 'err');
+      return;
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let lastData = null;
+    let isDone = false;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const lines = decoder.decode(value).split('\n');
+      const lines = decoder.decode(value, { stream: true }).split('\n');
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           try {
             const d = JSON.parse(line.slice(6));
             if (d.chunk) fullText += d.chunk;
-            if (d.done) lastData = d;
+            if (d.done) isDone = true;
           } catch(e) {}
         }
       }
     }
 
-    toast('Programme généré avec succès ! 🎉');
-    showView('programme');
-    loadProgramme();
-    loadDashboard();
+    if (isDone || fullText.length > 100) {
+      toast('Programme généré avec succès ! 💪');
+      // Wait a moment for DB to save then navigate
+      await new Promise(r => setTimeout(r, 800));
+      showView('programme');
+      await loadProgramme();
+      loadDashboard();
+    } else {
+      toast('Erreur lors de la génération, réessaie', 'err');
+    }
   } catch(e) {
-    toast('Erreur lors de la génération','err');
+    console.error('Generate error:', e);
+    toast('Erreur lors de la génération', 'err');
   } finally {
     setLoading(false);
   }
