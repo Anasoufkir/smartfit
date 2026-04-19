@@ -35,6 +35,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
 /* ── LANDING ── */
 #page-landing{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,rgba(232,52,28,.18),transparent 60%),var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
+#page-landing[style*="display:none"]{display:none !important;}
 .hero-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(232,52,28,.1);border:1px solid rgba(232,52,28,.3);color:var(--red);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 16px;border-radius:30px;margin-bottom:28px;}
 .hero-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
@@ -669,8 +670,10 @@ function doLogout() {
 
 // ── APP ──
 function showApp() {
+  document.getElementById('page-landing').style.display = 'none';
   document.getElementById('page-landing').classList.remove('on');
   document.getElementById('page-app').style.display = 'block';
+  document.getElementById('page-app').classList.add('on');
   updateSidebarUser();
 }
 
