@@ -208,26 +208,46 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
   }
 });
 
+// GET LATEST PROGRAMME — doit être AVANT /:id
+router.get('/latest/current', auth, async (req, res) => {
+  try {
+    const prog = await db.get2('SELECT * FROM programmes WHERE user_id=? ORDER BY created_at DESC LIMIT 1', [req.user.id]);
+    if (!prog) return res.status(404).json({ error: 'Aucun programme' });
+    prog.data = JSON.parse(prog.data);
+    res.json(prog);
+  } catch(e) {
+    console.error('latest/current error:', e);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// GET SUIVI HISTORY — doit être AVANT /:id
+router.get('/suivi/history', auth, async (req, res) => {
+  try {
+    const suivi = await db.all2('SELECT * FROM suivi WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
+    const seances = await db.all2('SELECT * FROM seances_log WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
+    res.json({ suivi, seances });
+  } catch(e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // GET ALL PROGRAMMES
 router.get('/', auth, async (req, res) => {
   const programmes = await db.all2('SELECT id, semaine, created_at FROM programmes WHERE user_id=? ORDER BY semaine DESC', [req.user.id]);
   res.json(programmes);
 });
 
-// GET SPECIFIC PROGRAMME
+// GET SPECIFIC PROGRAMME — après les routes fixes
 router.get('/:id', auth, async (req, res) => {
-  const prog = await db.get2('SELECT * FROM programmes WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
-  if (!prog) return res.status(404).json({ error: 'Programme non trouvé' });
-  prog.data = JSON.parse(prog.data);
-  res.json(prog);
-});
-
-// GET LATEST PROGRAMME
-router.get('/latest/current', auth, async (req, res) => {
-  const prog = await db.get2('SELECT * FROM programmes WHERE user_id=? ORDER BY created_at DESC LIMIT 1', [req.user.id]);
-  if (!prog) return res.status(404).json({ error: 'Aucun programme' });
-  prog.data = JSON.parse(prog.data);
-  res.json(prog);
+  try {
+    const prog = await db.get2('SELECT * FROM programmes WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
+    if (!prog) return res.status(404).json({ error: 'Programme non trouvé' });
+    prog.data = JSON.parse(prog.data);
+    res.json(prog);
+  } catch(e) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // UPDATE SUIVI HEBDO
@@ -255,13 +275,6 @@ router.post('/seance-log', auth, async (req, res) => {
       [req.user.id, semaine, jour, type_seance, completee ? 1 : 0]);
   }
   res.json({ success: true });
-});
-
-// GET SUIVI HISTORY
-router.get('/suivi/history', auth, async (req, res) => {
-  const suivi = await db.all2('SELECT * FROM suivi WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
-  const seances = await db.all2('SELECT * FROM seances_log WHERE user_id=? ORDER BY semaine ASC', [req.user.id]);
-  res.json({ suivi, seances });
 });
 
 module.exports = router;
