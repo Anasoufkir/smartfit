@@ -300,8 +300,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .err-box.show{display:block;}
 
 /* OVERLAY MOBILE */
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:98;}
 .sidebar-overlay.show{display:block;}
+.sidebar{z-index:100;}
 </style>
 </head>
 <body>
@@ -692,21 +693,29 @@ function authHeaders() {
 
 // ── NAVIGATION ──
 function showView(view) {
+  // Force close sidebar first on ALL screen sizes
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+
+  // Hide all views
   document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
+
+  // Show target view
   const viewEl = document.getElementById(`view-${view}`);
   if (viewEl) viewEl.classList.add('on');
+
+  // Highlight nav item
   const navMap = { dashboard:0, programme:1, 'new-programme':2, suivi:3, profile:4 };
   const items = document.querySelectorAll('.nav-item');
-  if (navMap[view] !== undefined) items[navMap[view]].classList.add('on');
+  if (navMap[view] !== undefined && items[navMap[view]]) {
+    items[navMap[view]].classList.add('on');
+  }
 
-  // Always close sidebar (important for mobile)
-  closeSidebar();
+  // Scroll to top
+  window.scrollTo(0, 0);
 
-  // Scroll to top of main content
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  document.querySelector('.main-content')?.scrollTo({ top: 0 });
-
+  // Load data
   if (view === 'programme') loadProgramme();
   if (view === 'suivi') loadSuivi();
   if (view === 'profile') loadProfile();
@@ -714,9 +723,18 @@ function showView(view) {
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('show');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const isOpen = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('show');
+  }
 }
+
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('show');
