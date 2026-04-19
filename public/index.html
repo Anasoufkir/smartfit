@@ -217,10 +217,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .ex-b{background:var(--s3);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:800;color:var(--sub);}
 
 /* YOUTUBE EMBED */
-.yt-embed{border-radius:10px;overflow:hidden;position:relative;padding-bottom:56.25%;height:0;background:#000;margin-top:8px;}
+.yt-embed{border-radius:8px;overflow:hidden;position:relative;padding-bottom:45%;height:0;background:#000;margin-top:8px;max-width:320px;}
 .yt-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
-.yt-thumb{position:relative;cursor:pointer;}
-.yt-thumb img{width:100%;border-radius:10px;display:block;}
+.yt-thumb{position:relative;cursor:pointer;max-width:320px;}
+.yt-thumb img{width:100%;border-radius:8px;display:block;max-height:140px;object-fit:cover;}
 .yt-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
 .yt-play-btn{width:56px;height:56px;border-radius:50%;background:rgba(255,0,0,.9);display:flex;align-items:center;justify-content:center;transition:.2s;}
 .yt-play-btn:hover{transform:scale(1.1);}
@@ -312,7 +312,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 <div id="loading">
   <div class="spin"></div>
   <div class="load-txt">Génération en cours...</div>
-  <div class="load-sub">Notre coach IA analyse ton profil et crée ton programme personnalisé</div>
+  <div class="load-sub">Analyse de ton profil et création de ton programme personnalisé</div>
 </div>
 
 <!-- TOAST -->
@@ -343,8 +343,24 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 
     <!-- REGISTER -->
     <div id="form-register">
-      <div class="field"><label>Prénom</label><input type="text" id="r-nom" placeholder="Ton prénom"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Prénom</label><input type="text" id="r-prenom" placeholder="Prénom"></div>
+        <div class="field"><label>Nom</label><input type="text" id="r-nom" placeholder="Nom de famille"></div>
+      </div>
+      <div class="field"><label>Date de naissance</label><input type="date" id="r-dob"></div>
+      <div class="field"><label>Sexe</label>
+        <select id="r-sexe" style="width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:11px;padding:13px 15px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;appearance:none;">
+          <option value="">Choisir...</option>
+          <option value="homme">Homme</option>
+          <option value="femme">Femme</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><label>Poids (kg)</label><input type="number" id="r-poids" placeholder="Ex: 75"></div>
+        <div class="field"><label>Taille (cm)</label><input type="number" id="r-taille" placeholder="Ex: 175"></div>
+      </div>
       <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="ton@email.com"></div>
+      <div class="field"><label>Téléphone (optionnel)</label><input type="tel" id="r-tel" placeholder="+212 6XX XX XX XX"></div>
       <div class="field"><label>Mot de passe</label><input type="password" id="r-password" placeholder="Min 6 caractères"></div>
       <button class="btn-full" onclick="doRegister()">Créer mon compte</button>
     </div>
@@ -423,7 +439,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         <div class="actions-grid">
           <div class="action-card" onclick="showView('programme')"><div class="action-icon">📋</div><div class="action-title">Voir mon programme</div><div class="action-sub">Nutrition & entraînement</div></div>
           <div class="action-card" onclick="showView('suivi')"><div class="action-icon">📊</div><div class="action-title">Suivi semaine</div><div class="action-sub">Enregistrer ma progression</div></div>
-          <div class="action-card" onclick="showView('new-programme')"><div class="action-icon">✨</div><div class="action-title">Nouveau programme</div><div class="action-sub">Regénérer avec l'IA</div></div>
+          <div class="action-card" onclick="showView('new-programme')"><div class="action-icon">✨</div><div class="action-title">Nouveau programme</div><div class="action-sub">Générer un nouveau programme</div></div>
           <div class="action-card" onclick="showView('profile')"><div class="action-icon">👤</div><div class="action-title">Mon profil</div><div class="action-sub">Modifier mes infos</div></div>
         </div>
       </div>
@@ -612,12 +628,25 @@ function authErr(msg) {
 }
 
 async function doRegister() {
+  const prenom = document.getElementById('r-prenom').value.trim();
   const nom = document.getElementById('r-nom').value.trim();
   const email = document.getElementById('r-email').value.trim();
   const password = document.getElementById('r-password').value;
-  if (!nom||!email||!password) return authErr('Remplis tous les champs');
+  const sexe = document.getElementById('r-sexe').value;
+  const poids = document.getElementById('r-poids').value;
+  const taille = document.getElementById('r-taille').value;
+  const dob = document.getElementById('r-dob').value;
+  const fullNom = `${prenom} ${nom}`.trim();
+
+  if (!prenom || !nom) return authErr('Entre ton prénom et nom');
+  if (!email) return authErr('Entre ton email');
+  if (!password || password.length < 6) return authErr('Mot de passe trop court (min 6 caractères)');
   try {
-    const res = await fetch('/api/auth/register', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nom,email,password})});
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nom: fullNom, email, password, sexe, poids, taille, dob })
+    });
     const data = await res.json();
     if (!res.ok) return authErr(data.error);
     loginSuccess(data);
