@@ -752,6 +752,27 @@ function showView(view) {
   if (view === 'suivi') loadSuivi();
   if (view === 'profile') loadProfile();
   if (view === 'dashboard') loadDashboard();
+  if (view === 'new-programme') prefillNewProgramme();
+}
+
+function prefillNewProgramme() {
+  if (!user) return;
+  if (user.poids) document.getElementById('g-poids').value = user.poids;
+  if (user.taille) document.getElementById('g-taille').value = user.taille;
+  if (user.age) document.getElementById('g-age').value = user.age;
+  if (user.sexe) document.getElementById('g-sexe').value = user.sexe;
+  if (user.objectif) {
+    const card = document.querySelector(`[name="g-obj"][value="${user.objectif}"]`);
+    if (card) selOpt(card.closest('.opt-card'), 'g-obj');
+  }
+  if (user.niveau) {
+    const card = document.querySelector(`[name="g-niv"][value="${user.niveau}"]`);
+    if (card) selOpt(card.closest('.opt-card'), 'g-niv');
+  }
+  if (user.jours) {
+    const card = document.querySelector(`[name="g-jrs"][value="${user.jours}"]`);
+    if (card) selOpt(card.closest('.opt-card'), 'g-jrs');
+  }
 }
 
 function toggleSidebar() {
