@@ -880,7 +880,12 @@ function renderEntrainement(data, semaine) {
       </div>
       <div class="ex-list">`;
     s.exercices.forEach((e,ei) => {
-      const ytId = e.youtubeId || 'dQw4w9WgXcQ';
+      const ytId = e.youtubeId || null;
+      const ytSection = ytId ? `
+        <div class="yt-thumb" onclick="openYoutube('${ytId}',this)">
+          <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${e.nom}" loading="lazy" style="border-radius:8px;width:100%;max-height:130px;object-fit:cover;">
+          <div class="yt-play"><div class="yt-play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div></div>
+        </div>` : '';
       html += `<div class="ex-row">
         <div class="ex-row-top">
           <div class="ex-num">${ei+1}</div>
@@ -894,10 +899,7 @@ function renderEntrainement(data, semaine) {
             <div class="ex-b">⏱ ${e.repos}</div>
           </div>
         </div>
-        <div class="yt-thumb" onclick="openYoutube('${ytId}',this)">
-          <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${e.nom}" loading="lazy" style="border-radius:10px;width:100%">
-          <div class="yt-play"><div class="yt-play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div></div>
-        </div>
+        ${ytSection}
       </div>`;
     });
     html += `</div></div>`;

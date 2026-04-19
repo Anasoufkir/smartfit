@@ -7,44 +7,91 @@ const auth = require('../middleware/auth');
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // YouTube video IDs for exercises
-const YOUTUBE_VIDEOS = {
-  'développé couché': 'vcBig73ojpE',
-  'bench press': 'vcBig73ojpE',
-  'développé incliné': '8iPEnn-ltC8',
-  'développé militaire': 'qEwKCR5JCog',
-  'élévations latérales': '3VcKaXpzqRo',
-  'curl biceps': 'kwG2ipFRgfo',
-  'curl marteau': 'zC3nLlEvin4',
-  'tirage vertical': 'CAwf7n6Luuc',
-  'lat pulldown': 'CAwf7n6Luuc',
-  'rowing assis': 'GZbfZ033f74',
-  'extension triceps': '2-LAMcpzODU',
-  'squat': 'U3HlEF_E9fo',
-  'presse à cuisses': 'IZxyjW7MPJQ',
-  'leg press': 'IZxyjW7MPJQ',
-  'leg extension': 'YyvSfVjQeL0',
-  'leg curl': '1Tq3QdYUuHs',
-  'mollets': 'gwLzBJYoWlI',
-  'soulevé de terre': 'op9kVnSso6Q',
-  'deadlift': 'op9kVnSso6Q',
-  'planche': 'pSHjTRCQxIw',
-  'plank': 'pSHjTRCQxIw',
-  'dips': 'yTMGMmVkLMo',
-  'tractions': 'eGo4IYlbE5g',
-  'pull up': 'eGo4IYlbE5g',
-  'fentes': 'QOVaHwm-Q6U',
-  'lunges': 'QOVaHwm-Q6U',
-  'rowing barre': 'T3N-TO4reLQ',
-  'hip thrust': 'SEdqd1n0cvg',
-  'gainage': 'pSHjTRCQxIw',
-};
+const YOUTUBE_VIDEOS = [
+  // POITRINE
+  { keys: ['développé couché', 'bench press', 'développé plat'], id: 'vcBig73ojpE' },
+  { keys: ['développé incliné', 'incline press', 'incliné haltères'], id: '8iPEnn-ltC8' },
+  { keys: ['développé décliné', 'décliné'], id: 'LfyQTbZfU6Q' },
+  { keys: ['écarté', 'fly', 'pec deck', 'butterfly'], id: 'eozdVDA78K0' },
+  { keys: ['pompe', 'push up', 'push-up'], id: 'IODxDxX7oi4' },
+  // ÉPAULES
+  { keys: ['développé militaire', 'overhead press', 'military press', 'shoulder press'], id: 'qEwKCR5JCog' },
+  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: '3VcKaXpzqRo' },
+  { keys: ['élévation frontale', 'front raise'], id: 'sOkWMWhMkCY' },
+  { keys: ['oiseau', 'rear delt', 'face pull', 'arrière épaule', 'oiseau haltères'], id: 'rep-qVOkqgk' },
+  { keys: ['upright row', 'tirage menton', 'rowing menton'], id: '4AHqDMgGXTo' },
+  // TRICEPS
+  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps'], id: '2-LAMcpzODU' },
+  { keys: ['dips', 'barre parallèle', 'parallèles'], id: 'yTMGMmVkLMo' },
+  { keys: ['skull crusher', 'barre front', 'extension nuque', 'extension couché'], id: 'NIH2y0OmCvY' },
+  { keys: ['kickback triceps', 'kick back'], id: 'ZOJXcYHMKAg' },
+  // DOS
+  { keys: ['tirage vertical', 'lat pulldown', 'tirage nuque', 'tirage poitrine'], id: 'CAwf7n6Luuc' },
+  { keys: ['traction', 'pull up', 'pull-up', 'chin up'], id: 'eGo4IYlbE5g' },
+  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie'], id: 'GZbfZ033f74' },
+  { keys: ['rowing barre', 'bent over row', 'rowing penché'], id: 'T3N-TO4reLQ' },
+  { keys: ['rowing haltère', 'rowing unilatéral', 'rowing un bras', 'one arm row', 'haltère un bras'], id: 'pYcpY20QaE8' },
+  { keys: ['pull over', 'pullover'], id: 'FK4rHfGAFlk' },
+  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: 'op9kVnSso6Q' },
+  { keys: ['good morning', 'hyperextension', 'extension lombaire'], id: '4e5DXBJ4p40' },
+  // BICEPS
+  { keys: ['curl barre', 'curl biceps barre', 'barbell curl'], id: 'kwG2ipFRgfo' },
+  { keys: ['curl haltères', 'curl alternés', 'dumbbell curl'], id: 'sAq_ocpRh_I' },
+  { keys: ['curl marteau', 'hammer curl', 'prise neutre'], id: 'zC3nLlEvin4' },
+  { keys: ['curl concentré', 'concentration curl'], id: '0AUGkch3tzc' },
+  { keys: ['curl câble', 'curl poulie'], id: 'NFzTWp2qpiE' },
+  { keys: ['curl barre ez', 'ez bar', 'barre ez'], id: 'kwG2ipFRgfo' },
+  // JAMBES
+  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'U3HlEF_E9fo' },
+  { keys: ['presse à cuisses', 'leg press', 'presse jambes'], id: 'IZxyjW7MPJQ' },
+  { keys: ['leg extension', 'extension quadriceps', 'extension jambe'], id: 'YyvSfVjQeL0' },
+  { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl'], id: '1Tq3QdYUuHs' },
+  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant'], id: 'QOVaHwm-Q6U' },
+  { keys: ['mollet', 'calf raise', 'élévation mollets', 'standing calf'], id: 'gwLzBJYoWlI' },
+  { keys: ['hip thrust', 'fessiers pont', 'glute bridge', 'pont fessier'], id: 'SEdqd1n0cvg' },
+  { keys: ['goblet squat'], id: 'MeIiIdhvXT4' },
+  { keys: ['sumo squat', 'sumo deadlift'], id: 'jaEGjaxku04' },
+  { keys: ['step up', 'montée genoux'], id: 'dQqApCGd5Ss' },
+  { keys: ['box jump', 'saut boîte'], id: 'NBY9-kTuHEk' },
+  // ABDOS / CORE
+  { keys: ['planche', 'plank', 'gainage'], id: 'pSHjTRCQxIw' },
+  { keys: ['crunch', 'abdominaux', 'sit up'], id: 'Xyd_fa5zoEU' },
+  { keys: ['russian twist', 'rotation tronc'], id: 'wkD8rjkodUI' },
+  { keys: ['relevé jambes', 'leg raise', 'relevé de jambes'], id: 'l4kQd9eWclE' },
+  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
+  { keys: ['roue abdominaux', 'ab wheel'], id: 'UtFSLRzgs_4' },
+  // CARDIO
+  { keys: ['burpee'], id: 'TU8QYVW0gDU' },
+  { keys: ['jumping jack', 'écart saut'], id: 'iSSAk4XCsRA' },
+  { keys: ['corde à sauter', 'jump rope', 'sauter corde'], id: 'u3zgHI8QnqE' },
+];
 
 function getYoutubeId(exerciseName) {
-  const name = exerciseName.toLowerCase();
-  for (const [key, id] of Object.entries(YOUTUBE_VIDEOS)) {
-    if (name.includes(key)) return id;
+  const name = exerciseName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove accents for better matching
+
+  for (const entry of YOUTUBE_VIDEOS) {
+    for (const key of entry.keys) {
+      const normalizedKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (name.includes(normalizedKey) || normalizedKey.includes(name)) {
+        return entry.id;
+      }
+    }
   }
-  return 'dQw4w9WgXcQ';
+
+  // Fallback: try word-by-word matching
+  const words = name.split(' ').filter(w => w.length > 3);
+  for (const entry of YOUTUBE_VIDEOS) {
+    for (const key of entry.keys) {
+      const normalizedKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      for (const word of words) {
+        if (normalizedKey.includes(word)) return entry.id;
+      }
+    }
+  }
+
+  // No match found - return null so we can hide the video
+  return null;
 }
 
 // GENERATE PROGRAMME
