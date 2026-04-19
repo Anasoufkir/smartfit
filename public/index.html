@@ -74,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* SIDEBAR */
 .app-layout{display:flex;min-height:100vh;}
 .sidebar{width:240px;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
-@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:.3s;}.sidebar.open{transform:translateX(0);}}
+@media(max-width:768px){.sidebar{transform:translateX(-100%);transition:.3s;}.sidebar.open{transform:translateX(0);}#sidebar-close-btn{display:inline-block !important;}}
 .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
 .sidebar-logo span{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;}
 .sidebar-logo span em{color:var(--red);font-style:normal;}
@@ -363,7 +363,10 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <div class="app-layout">
     <!-- SIDEBAR -->
     <div class="sidebar" id="sidebar">
-      <div class="sidebar-logo"><span>SMART<em>FIT</em></span></div>
+      <div class="sidebar-logo">
+        <span>SMART<em>FIT</em></span>
+        <button onclick="closeSidebar()" style="display:none;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;float:right;margin-top:-4px;" id="sidebar-close-btn">✕</button>
+      </div>
       <div class="sidebar-user">
         <div class="s-avatar" id="s-avatar" onclick="showView('profile')"></div>
         <div>
@@ -691,11 +694,18 @@ function authHeaders() {
 function showView(view) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
-  document.getElementById(`view-${view}`).classList.add('on');
+  const viewEl = document.getElementById(`view-${view}`);
+  if (viewEl) viewEl.classList.add('on');
   const navMap = { dashboard:0, programme:1, 'new-programme':2, suivi:3, profile:4 };
   const items = document.querySelectorAll('.nav-item');
   if (navMap[view] !== undefined) items[navMap[view]].classList.add('on');
+
+  // Always close sidebar (important for mobile)
   closeSidebar();
+
+  // Scroll to top of main content
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelector('.main-content')?.scrollTo({ top: 0 });
 
   if (view === 'programme') loadProgramme();
   if (view === 'suivi') loadSuivi();
