@@ -8,51 +8,51 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // YouTube video IDs for exercises
 const YOUTUBE_VIDEOS_HOMME = [
-  // POITRINE
+  // POITRINE — Jeff Nippard
   { keys: ['développé couché', 'bench press', 'développé plat'], id: 'vcBig73ojpE' },
   { keys: ['développé incliné', 'incline press', 'incliné haltères'], id: '8iPEnn-ltC8' },
   { keys: ['développé décliné', 'décliné'], id: 'LfyQTbZfU6Q' },
-  { keys: ['écarté', 'fly', 'pec deck', 'butterfly'], id: 'eozdVDA78K0' },
+  { keys: ['écarté', 'fly', 'pec deck', 'butterfly', 'câble croisé'], id: 'QENKPHhQVi4' },
   { keys: ['pompe', 'push up', 'push-up'], id: 'IODxDxX7oi4' },
-  // ÉPAULES
+  // ÉPAULES — Jeff Nippard
   { keys: ['développé militaire', 'overhead press', 'military press', 'shoulder press'], id: 'qEwKCR5JCog' },
-  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: '3VcKaXpzqRo' },
+  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: 'KAoB7bVVAFY' },
   { keys: ['élévation frontale', 'front raise'], id: 'sOkWMWhMkCY' },
-  { keys: ['oiseau', 'rear delt', 'face pull', 'arrière épaule'], id: 'rep-qVOkqgk' },
+  { keys: ['face pull', 'arrière épaule', 'rear delt', 'oiseau'], id: 'rep-qVOkqgk' },
   { keys: ['tirage menton', 'rowing menton', 'upright row'], id: '4AHqDMgGXTo' },
-  // TRICEPS
-  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps'], id: '2-LAMcpzODU' },
+  // TRICEPS — Jeff Nippard
+  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps'], id: 'kiuVLjZDZBE' },
   { keys: ['dips', 'barre parallèle', 'parallèles'], id: 'yTMGMmVkLMo' },
   { keys: ['skull crusher', 'barre front', 'extension nuque', 'extension couché'], id: 'NIH2y0OmCvY' },
   { keys: ['kickback triceps', 'kick back'], id: 'ZOJXcYHMKAg' },
-  // DOS
+  // DOS — Jeff Nippard
   { keys: ['tirage vertical', 'lat pulldown', 'tirage nuque', 'tirage poitrine'], id: 'CAwf7n6Luuc' },
   { keys: ['traction', 'pull up', 'pull-up', 'chin up'], id: 'eGo4IYlbE5g' },
-  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie'], id: 'GZbfZ033f74' },
+  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie', 'tirage horizontal poulie'], id: 'GZbfZ033f74' },
   { keys: ['rowing barre', 'bent over row', 'rowing penché'], id: 'T3N-TO4reLQ' },
   { keys: ['rowing haltère', 'rowing unilatéral', 'rowing un bras', 'one arm row', 'haltère un bras'], id: 'pYcpY20QaE8' },
   { keys: ['pull over', 'pullover'], id: 'FK4rHfGAFlk' },
-  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: 'op9kVnSso6Q' },
-  { keys: ['good morning', 'hyperextension', 'extension lombaire'], id: '4e5DXBJ4p40' },
-  // BICEPS
+  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre', 'roumain', 'romanian'], id: 'op9kVnSso6Q' },
+  { keys: ['hyperextension', 'extension lombaire', 'good morning'], id: '4e5DXBJ4p40' },
+  // BICEPS — Jeff Nippard
   { keys: ['curl barre', 'curl biceps barre', 'barbell curl', 'curl barre ez', 'ez bar', 'barre ez'], id: 'kwG2ipFRgfo' },
   { keys: ['curl haltères', 'curl alternés', 'dumbbell curl'], id: 'sAq_ocpRh_I' },
   { keys: ['curl marteau', 'hammer curl', 'prise neutre'], id: 'zC3nLlEvin4' },
   { keys: ['curl concentré', 'concentration curl'], id: '0AUGkch3tzc' },
-  { keys: ['curl câble', 'curl poulie'], id: 'NFzTWp2qpiE' },
-  // JAMBES
-  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'ultWZbUMPL8' },
+  { keys: ['curl câble', 'curl poulie', 'bayesian curl'], id: 'NFzTWp2qpiE' },
+  // JAMBES — Jeff Nippard
+  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'bEv6CCg2BC8' },
   { keys: ['presse à cuisses', 'leg press', 'presse jambes'], id: 'IZxyjW7MPJQ' },
   { keys: ['leg extension', 'extension quadriceps', 'extension jambe'], id: 'YyvSfVjQeL0' },
   { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl'], id: '1Tq3QdYUuHs' },
-  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant'], id: 'QOVaHwm-Q6U' },
+  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant', 'bulgare', 'bulgarian'], id: 'QOVaHwm-Q6U' },
   { keys: ['mollet', 'calf raise', 'élévation mollets', 'standing calf'], id: 'gwLzBJYoWlI' },
   { keys: ['hip thrust', 'fessiers pont', 'glute bridge', 'pont fessier'], id: 'SEdqd1n0cvg' },
   { keys: ['goblet squat'], id: 'MeIiIdhvXT4' },
   { keys: ['sumo squat', 'sumo deadlift'], id: 'jaEGjaxku04' },
   { keys: ['step up', 'montée genoux'], id: 'dQqApCGd5Ss' },
   { keys: ['box jump', 'saut boîte'], id: 'NBY9-kTuHEk' },
-  // ABDOS / CORE
+  // ABDOS / CORE — Jeff Nippard
   { keys: ['planche', 'plank', 'gainage'], id: 'pSHjTRCQxIw' },
   { keys: ['crunch', 'abdominaux', 'sit up'], id: 'Xyd_fa5zoEU' },
   { keys: ['russian twist', 'rotation tronc'], id: 'wkD8rjkodUI' },
