@@ -398,7 +398,6 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
           <div class="dash-sub" id="dash-date">—</div>
         </div>
         <div class="msg-banner" id="dash-message" style="display:none">
-          <div class="msg-ico">🤖</div>
           <div class="msg-body" id="dash-msg-text">—</div>
         </div>
         <div class="stats-grid" id="stats-grid">
@@ -632,15 +631,30 @@ async function doLogin() {
   } catch { authErr('Erreur de connexion'); }
 }
 
-function loginSuccess(data) {
+async function loginSuccess(data) {
   token = data.token;
   user = data.user;
   localStorage.setItem('sf_token', token);
   localStorage.setItem('sf_user', JSON.stringify(user));
   closeModal();
   showApp();
-  loadDashboard();
-  toast(`Bienvenue ${user.nom} ! 🎉`);
+
+  // Check if user has a programme already
+  try {
+    const res = await fetch('/api/programme/latest/current', { headers: authHeaders() });
+    if (res.ok) {
+      // Has programme → go to dashboard
+      loadDashboard();
+      showView('dashboard');
+    } else {
+      // No programme → go directly to new programme page
+      showView('new-programme');
+      toast(`Bienvenue ${user.nom} ! Crée ton premier programme 💪`);
+    }
+  } catch {
+    showView('new-programme');
+    toast(`Bienvenue ${user.nom} ! Crée ton premier programme 💪`);
+  }
 }
 
 function doLogout() {
@@ -703,6 +717,12 @@ async function loadDashboard() {
   try {
     const res = await fetch('/api/user/stats', { headers: authHeaders() });
     const stats = await res.json();
+
+    // Si aucun programme, rediriger vers nouveau programme
+    if (!stats.lastProgramme) {
+      showView('new-programme');
+      return;
+    }
 
     document.getElementById('s-semaine').textContent = stats.programmes || '—';
 
