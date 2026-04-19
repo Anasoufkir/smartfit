@@ -7,111 +7,44 @@ const auth = require('../middleware/auth');
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // YouTube video IDs for exercises
+// IDs IMZA WORKOUT — https://www.youtube.com/@IMZAWORKOUT95/shorts
+const IMZA = {
+  triceps:  'HqnRinSg00E',
+  biceps:   'I-mDjL5IIo4',
+  jambes:   'Ui-vUPt5zPw',
+  poitrine: 'KYjiO7OIpuQ',
+  dos:      'mZ-TjumYJ_w',
+  abdos:    'N8NMGPuNerw',
+};
+
 const YOUTUBE_VIDEOS_HOMME = [
-  // POITRINE — Jeff Nippard confirmés
-  { keys: ['développé couché', 'bench press', 'développé plat', 'chest press'], id: 'vcBig73ojpE' },
-  { keys: ['développé incliné', 'incline press', 'incliné haltères', 'incline dumbbell'], id: '8iPEnn-ltC8' },
-  { keys: ['écarté', 'fly', 'pec deck', 'butterfly', 'câble croisé', 'chest fly'], id: 'fGm-ef-4PVk' },
-  { keys: ['pompe', 'push up', 'push-up', 'flexion bras'], id: 'IODxDxX7oi4' },
-  { keys: ['dips', 'barre parallèle', 'parallèles', 'triceps dips'], id: 'yTMGMmVkLMo' },
-  // ÉPAULES — Jeff Nippard confirmés
-  { keys: ['développé militaire', 'overhead press', 'military press', 'shoulder press', 'développé épaules'], id: 'qEwKCR5JCog' },
-  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise', 'oiseau latéral'], id: 'SgyUoY0IZ7A' },
-  { keys: ['face pull', 'arrière épaule', 'rear delt', 'oiseau', 'poulie visage'], id: 'rep-qVOkqgk' },
-  { keys: ['élévation frontale', 'front raise', 'oiseau avant'], id: 'sOkWMWhMkCY' },
-  // TRICEPS — Jeff Nippard confirmés
-  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps', 'triceps cable'], id: 'OpRMRhr0Ycc' },
-  { keys: ['skull crusher', 'barre front', 'extension nuque', 'french press', 'barre crâne'], id: 'NIH2y0OmCvY' },
-  { keys: ['kickback triceps', 'kick back', 'triceps kickback'], id: 'ZOJXcYHMKAg' },
-  // DOS — Jeff Nippard confirmés
-  { keys: ['tirage vertical', 'lat pulldown', 'tirage nuque', 'tirage poitrine', 'pulldown'], id: 'CAwf7n6Luuc' },
-  { keys: ['traction', 'pull up', 'pull-up', 'chin up', 'tractions'], id: 'eGo4IYlbE5g' },
-  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie', 'câble rowing'], id: 'GZbfZ033f74' },
-  { keys: ['rowing barre', 'bent over row', 'rowing penché', 'barbell row'], id: 'T3N-TO4reLQ' },
-  { keys: ['rowing haltère', 'rowing unilatéral', 'rowing un bras', 'one arm row', 'haltère un bras'], id: 'pYcpY20QaE8' },
-  { keys: ['meilleur exercice dos', 'back exercises ranked'], id: 'jLvqKgW-_G8' },
-  { keys: ['pull over', 'pullover', 'tirage buste'], id: 'FK4rHfGAFlk' },
-  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: 'op9kVnSso6Q' },
-  { keys: ['soulevé roumain', 'romanian deadlift', 'rdl', 'deadlift roumain'], id: 'JCXUYuzwNrM' },
-  { keys: ['hyperextension', 'extension lombaire', 'good morning', 'back extension'], id: '4e5DXBJ4p40' },
-  // BICEPS — Jeff Nippard confirmés
-  { keys: ['curl barre', 'curl biceps barre', 'barbell curl', 'barre ez', 'ez bar curl'], id: 'GNO4OtYoCYk' },
-  { keys: ['curl haltères', 'curl alternés', 'dumbbell curl', 'curl biceps haltères'], id: 'sAq_ocpRh_I' },
-  { keys: ['curl marteau', 'hammer curl', 'prise neutre', 'marteau'], id: 'zC3nLlEvin4' },
-  { keys: ['curl concentré', 'concentration curl', 'curl prédicateur'], id: '0AUGkch3tzc' },
-  { keys: ['curl câble', 'curl poulie', 'bayesian curl', 'câble curl'], id: 'NFzTWp2qpiE' },
-  // JAMBES — Jeff Nippard confirmés
-  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat', 'squat bulgare'], id: 'bEv6CCg2BC8' },
-  { keys: ['quad', 'quadriceps', 'meilleur exercice jambes'], id: 'kIXcoivzGf8' },
-  { keys: ['presse à cuisses', 'leg press', 'presse jambes', 'machine jambes'], id: 'IZxyjW7MPJQ' },
-  { keys: ['leg extension', 'extension quadriceps', 'extension jambe', 'machine quadriceps'], id: 'YyvSfVjQeL0' },
-  { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl', 'ischio jambiers'], id: '1Tq3QdYUuHs' },
-  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant', 'split squat'], id: 'QOVaHwm-Q6U' },
-  { keys: ['mollet', 'calf raise', 'élévation mollets', 'standing calf', 'gastrocnémien'], id: 'gwLzBJYoWlI' },
-  { keys: ['hip thrust', 'fessiers pont', 'glute bridge', 'pont fessier', 'fessiers machine'], id: 'SEdqd1n0cvg' },
-  { keys: ['goblet squat'], id: 'MeIiIdhvXT4' },
-  { keys: ['sumo squat', 'sumo deadlift', 'squat sumo'], id: 'jaEGjaxku04' },
-  // ABDOS / CORE
-  { keys: ['planche', 'plank', 'gainage', 'core stability'], id: 'pSHjTRCQxIw' },
-  { keys: ['crunch', 'abdominaux', 'sit up', 'crunch câble'], id: 'Xyd_fa5zoEU' },
-  { keys: ['russian twist', 'rotation tronc'], id: 'wkD8rjkodUI' },
-  { keys: ['relevé jambes', 'leg raise', 'relevé de jambes', 'hanging leg raise'], id: 'l4kQd9eWclE' },
-  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
+  // POITRINE
+  { keys: ['développé couché', 'bench press', 'développé plat', 'chest press', 'développé haltères', 'développé incliné', 'incline press', 'écarté', 'fly', 'pec deck', 'butterfly', 'câble croisé', 'chest fly', 'pompe', 'push up', 'push-up', 'flexion bras', 'poitrine'], id: IMZA.poitrine },
+  // TRICEPS
+  { keys: ['triceps', 'extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps', 'skull crusher', 'barre front', 'extension nuque', 'french press', 'dips', 'kickback', 'barre parallèle'], id: IMZA.triceps },
+  // BICEPS
+  { keys: ['biceps', 'curl', 'curl barre', 'curl haltères', 'curl alternés', 'curl marteau', 'hammer curl', 'curl concentré', 'curl câble', 'bayesian curl', 'barbell curl', 'bras'], id: IMZA.biceps },
+  // DOS
+  { keys: ['dos', 'tirage', 'rowing', 'traction', 'pull up', 'pull-up', 'chin up', 'lat pulldown', 'tirage vertical', 'tirage horizontal', 'tirage nuque', 'tirage poitrine', 'rowing assis', 'rowing câble', 'rowing barre', 'rowing haltère', 'rowing un bras', 'soulevé de terre', 'deadlift', 'pullover', 'pull over', 'hyperextension', 'extension lombaire', 'dorsaux', 'grand dorsal'], id: IMZA.dos },
+  // JAMBES
+  { keys: ['jambes', 'squat', 'presse', 'leg press', 'leg extension', 'leg curl', 'fente', 'lunge', 'mollet', 'calf', 'hip thrust', 'goblet', 'quadriceps', 'ischio', 'hamstring', 'fessier', 'glute', 'bulgare', 'split squat', 'sumo'], id: IMZA.jambes },
+  // ABDOS
+  { keys: ['abdos', 'abdominal', 'planche', 'plank', 'gainage', 'crunch', 'sit up', 'russian twist', 'rotation tronc', 'relevé jambes', 'leg raise', 'mountain climber', 'grimpeur', 'core', 'ventre'], id: IMZA.abdos },
 ];
 
 const YOUTUBE_VIDEOS_FEMME = [
-  // FESSIERS / JAMBES (priorité pour les femmes)
-  { keys: ['hip thrust', 'fessiers pont', 'glute bridge', 'pont fessier'], id: 'jGNzDNmPuQY' },
-  { keys: ['squat', 'squat barre', 'back squat', 'squat guidé', 'smith squat'], id: 'aclHkVaku9U' },
-  { keys: ['sumo squat', 'sumo deadlift'], id: 'BE1EKz9OxCc' },
-  { keys: ['fente', 'lunge', 'fentes marchées', 'fentes avant'], id: 'wrwwXE_x-pQ' },
-  { keys: ['leg press', 'presse à cuisses', 'presse jambes'], id: 'yZmx_Ac3880' },
-  { keys: ['leg curl', 'curl ischio', 'flexion jambe', 'hamstring curl'], id: 'ELOCsoDSmrg' },
-  { keys: ['leg extension', 'extension quadriceps', 'extension jambe'], id: 'wJEN0ASZF4E' },
-  { keys: ['mollet', 'calf raise', 'élévation mollets', 'standing calf'], id: 'gwLzBJYoWlI' },
-  { keys: ['step up', 'montée genoux'], id: 'dQqApCGd5Ss' },
-  { keys: ['goblet squat'], id: 'o2KMqFGaVA0' },
-  { keys: ['donkey kick', 'coup de pied', 'abduction'], id: ''+'SdJNACSJBRc' },
-  { keys: ['fire hydrant', 'abduction hanche'], id: 'iy3fDnKFqw0' },
-  { keys: ['kickback fessier', 'extension hanche'], id: 'ELOCsoDSmrg' },
-  // DOS
-  { keys: ['tirage vertical', 'lat pulldown', 'tirage nuque', 'tirage poitrine'], id: 'JwxCMEqcuWQ' },
-  { keys: ['traction', 'pull up', 'pull-up', 'chin up'], id: 'p2_Fvzgs7Fc' },
-  { keys: ['rowing assis', 'rowing câble', 'tirage horizontal', 'seated row', 'tirage basse poulie'], id: 'UCXxvVItLoM' },
-  { keys: ['rowing haltère', 'rowing unilatéral', 'rowing un bras', 'one arm row'], id: 'lB2BytVOCsU' },
-  { keys: ['rowing barre', 'bent over row', 'rowing penché'], id: 'CZuBs5eFd_A' },
-  { keys: ['soulevé de terre', 'deadlift', 'soulever de terre'], id: '_YgkZFMSI4s' },
-  { keys: ['pull over', 'pullover'], id: 'FK4rHfGAFlk' },
-  { keys: ['hyperextension', 'extension lombaire', 'good morning'], id: '4e5DXBJ4p40' },
-  // ÉPAULES
-  { keys: ['développé militaire', 'overhead press', 'shoulder press', 'military press'], id: 'qEwKCR5JCog' },
-  { keys: ['élévation latérale', 'élévations latérales', 'lateral raise'], id: 'kDqklk1ZESo' },
-  { keys: ['élévation frontale', 'front raise'], id: 'sOkWMWhMkCY' },
-  { keys: ['face pull', 'oiseau', 'rear delt', 'arrière épaule'], id: 'rep-qVOkqgk' },
   // POITRINE
-  { keys: ['développé couché', 'bench press', 'développé plat'], id: 'leEcDcP5a8c' },
-  { keys: ['développé incliné', 'incline press', 'incliné haltères'], id: 'L_BFLF_KFRI' },
-  { keys: ['écarté', 'fly', 'pec deck', 'butterfly'], id: 'eozdVDA78K0' },
-  { keys: ['pompe', 'push up', 'push-up'], id: 'IODxDxX7oi4' },
-  // BRAS
-  { keys: ['curl haltères', 'curl alternés', 'dumbbell curl', 'curl biceps'], id: 'sAq_ocpRh_I' },
-  { keys: ['curl marteau', 'hammer curl', 'prise neutre'], id: 'zC3nLlEvin4' },
-  { keys: ['curl barre', 'barbell curl', 'barre ez', 'ez bar'], id: 'kwG2ipFRgfo' },
-  { keys: ['extension triceps', 'triceps poulie', 'pushdown', 'push down'], id: '2-LAMcpzODU' },
-  { keys: ['dips', 'barre parallèle'], id: 'yTMGMmVkLMo' },
-  { keys: ['kickback triceps', 'kick back'], id: 'ZOJXcYHMKAg' },
-  // ABDOS / CORE
-  { keys: ['planche', 'plank', 'gainage'], id: 'dD_3GEpFUOA' },
-  { keys: ['crunch', 'abdominaux', 'sit up'], id: 'MKmrqcoCZ-M' },
-  { keys: ['russian twist', 'rotation tronc'], id: 'wkD8rjkodUI' },
-  { keys: ['relevé jambes', 'leg raise', 'relevé de jambes'], id: 'l4kQd9eWclE' },
-  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
-  // CARDIO / FULL BODY
-  { keys: ['burpee'], id: 'TU8QYVW0gDU' },
-  { keys: ['jumping jack', 'écart saut'], id: 'iSSAk4XCsRA' },
-  { keys: ['corde à sauter', 'jump rope', 'sauter corde'], id: 'u3zgHI8QnqE' },
-  { keys: ['box jump', 'saut boîte'], id: 'NBY9-kTuHEk' },
-  { keys: ['mountain climber', 'grimpeur'], id: 'nmwgirgXLYM' },
+  { keys: ['développé couché', 'bench press', 'développé plat', 'chest press', 'développé haltères', 'développé incliné', 'incline press', 'écarté', 'fly', 'pec deck', 'butterfly', 'câble croisé', 'chest fly', 'pompe', 'push up', 'push-up', 'flexion bras', 'poitrine'], id: IMZA.poitrine },
+  // TRICEPS
+  { keys: ['triceps', 'extension triceps', 'triceps poulie', 'pushdown', 'push down', 'corde triceps', 'skull crusher', 'barre front', 'extension nuque', 'french press', 'dips', 'kickback', 'barre parallèle'], id: IMZA.triceps },
+  // BICEPS
+  { keys: ['biceps', 'curl', 'curl barre', 'curl haltères', 'curl alternés', 'curl marteau', 'hammer curl', 'curl concentré', 'curl câble', 'bayesian curl', 'barbell curl', 'bras'], id: IMZA.biceps },
+  // DOS
+  { keys: ['dos', 'tirage', 'rowing', 'traction', 'pull up', 'pull-up', 'chin up', 'lat pulldown', 'tirage vertical', 'tirage horizontal', 'tirage nuque', 'tirage poitrine', 'rowing assis', 'rowing câble', 'rowing barre', 'rowing haltère', 'rowing un bras', 'soulevé de terre', 'deadlift', 'pullover', 'pull over', 'hyperextension', 'extension lombaire', 'dorsaux', 'grand dorsal'], id: IMZA.dos },
+  // JAMBES / FESSIERS
+  { keys: ['jambes', 'squat', 'presse', 'leg press', 'leg extension', 'leg curl', 'fente', 'lunge', 'mollet', 'calf', 'hip thrust', 'goblet', 'quadriceps', 'ischio', 'hamstring', 'fessier', 'glute', 'bulgare', 'split squat', 'sumo', 'donkey kick', 'fire hydrant', 'kickback fessier', 'abduction', 'step up'], id: IMZA.jambes },
+  // ABDOS
+  { keys: ['abdos', 'abdominal', 'planche', 'plank', 'gainage', 'crunch', 'sit up', 'russian twist', 'rotation tronc', 'relevé jambes', 'leg raise', 'mountain climber', 'grimpeur', 'core', 'ventre'], id: IMZA.abdos },
 ];
 
 function getYoutubeId(exerciseName, sexe) {
