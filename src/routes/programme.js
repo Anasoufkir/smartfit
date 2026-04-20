@@ -95,16 +95,16 @@ router.post('/generate', auth, async (req, res) => {
 
   const morphText = morphotype ? `Morphotype: ${morphotype}.` : '';
 
-  const prompt = `Tu es un coach sportif et nutritionniste expert. Génère un programme complet sur 6 semaines en JSON UNIQUEMENT (pas de markdown, pas de texte avant ou après).
+  const prompt = `Tu es un coach sportif et nutritionniste expert. Génère un programme en JSON UNIQUEMENT (pas de markdown, pas de texte avant ou après).
 
 Profil: ${nom}, ${age} ans, ${poids}kg, ${taille}cm, ${sexe}, IMC:${imc}
 Objectif: ${objectif} | Niveau: ${niveau} | ${nbSeances} séances/semaine
 ${morphText}
-Restrictions alimentaires: ${restrictions || 'aucune'}
+Restrictions: ${restrictions || 'aucune'}
 ${suppText}
 Calories objectif: ${calObj} kcal | TDEE: ${tdee} kcal
 
-Retourne UNIQUEMENT ce JSON valide:
+JSON STRICT à retourner:
 {
   "resume": {
     "calories": ${calObj},
@@ -112,97 +112,53 @@ Retourne UNIQUEMENT ce JSON valide:
     "glucides": 0,
     "lipides": 0,
     "imc": "${imc}",
-    "imcStatut": "Normal/Surpoids/etc",
-    "message": "message motivant personnalisé 2-3 phrases",
-    "supplements": [{"nom": "Whey", "dose": "30g", "timing": "Post-entraînement", "conseil": "conseil spécifique"}]
+    "imcStatut": "Normal",
+    "message": "2 phrases motivantes personnalisées",
+    "supplements": [{"nom": "Whey", "dose": "30g", "timing": "Post-entraînement", "conseil": "conseil court"}]
   },
   "nutrition": {
     "repas": [
-      {
-        "nom": "Petit-déjeuner",
-        "heure": "07h00",
-        "aliments": ["200g flocons d'avoine", "3 oeufs", "1 banane"],
-        "calories": 0,
-        "proteines": 0,
-        "glucides": 0,
-        "lipides": 0
-      }
+      {"nom": "Petit-déjeuner", "heure": "07h00", "aliments": ["aliment 1", "aliment 2"], "calories": 0, "proteines": 0, "glucides": 0, "lipides": 0}
     ],
-    "alimentsAutorise": ["8 aliments recommandés"],
-    "alimentsInterdits": ["6 aliments à éviter"]
+    "alimentsAutorise": ["aliment 1", "aliment 2", "aliment 3", "aliment 4"],
+    "alimentsInterdits": ["aliment 1", "aliment 2", "aliment 3"]
+  },
+  "entrainement": {
+    "seances": [
+      {
+        "jour": "Lundi",
+        "type": "Push",
+        "exercices": [
+          {"nom": "Développé couché", "series": 4, "repetitions": "10-12", "repos": "90 sec", "muscle": "Pectoraux", "conseil": "Coudes à 45°", "securite": "⚠️ Ne pas verrouiller les coudes", "echauffement": "10 pompes légères"}
+        ]
+      }
+    ]
   },
   "programme6semaines": [
-    {
-      "semaine": 1,
-      "phase": "Adaptation",
-      "objectif": "Maîtriser les mouvements avec charges légères",
-      "seances": [
-        {
-          "jour": "Lundi",
-          "type": "Push",
-          "exercices": [
-            {
-              "nom": "Développé couché",
-              "series": 3,
-              "repetitions": "12-15",
-              "repos": "90 sec",
-              "muscle": "Pectoraux",
-              "conseil": "Coudes à 45°, descente contrôlée sur 3 secondes",
-              "securite": "⚠️ Ne jamais verrouiller les coudes en haut. Utilise un spotter pour les charges lourdes.",
-              "echauffement": "10 pompes légères + rotations épaules avant de commencer"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "semaine": 2,
-      "phase": "Adaptation",
-      "objectif": "Augmenter légèrement les charges (+2.5kg)",
-      "seances": []
-    },
-    {
-      "semaine": 3,
-      "phase": "Progression",
-      "objectif": "Charges +5-10%, focus sur la contraction musculaire",
-      "seances": []
-    },
-    {
-      "semaine": 4,
-      "phase": "Progression",
-      "objectif": "Volume augmenté, +1 série par exercice",
-      "seances": []
-    },
-    {
-      "semaine": 5,
-      "phase": "Intensification",
-      "objectif": "Surcharge progressive, techniques avancées",
-      "seances": []
-    },
-    {
-      "semaine": 6,
-      "phase": "Peak",
-      "objectif": "Test de force maximale et bilan final",
-      "seances": []
-    }
+    {"semaine": 1, "phase": "Adaptation", "objectif": "Maîtriser les mouvements", "charges": "60-65% max"},
+    {"semaine": 2, "phase": "Adaptation", "objectif": "+2.5kg sur les charges", "charges": "65-70% max"},
+    {"semaine": 3, "phase": "Progression", "objectif": "Augmenter les charges", "charges": "70-75% max"},
+    {"semaine": 4, "phase": "Progression", "objectif": "+1 série par exercice", "charges": "75% max"},
+    {"semaine": 5, "phase": "Intensification", "objectif": "Surcharge progressive", "charges": "80-85% max"},
+    {"semaine": 6, "phase": "Peak", "objectif": "Test de force maximale", "charges": "85-90% max"}
   ],
   "reglesSecurite": [
-    "Toujours s'échauffer 10 minutes avant chaque séance",
-    "Ne jamais sauter les jours de repos",
-    "Arrêter immédiatement si douleur articulaire aiguë",
-    "Progresser les charges de maximum 5-10% par semaine",
-    "Boire 500ml d'eau avant et pendant l'entraînement"
+    "S'échauffer 10 min avant chaque séance",
+    "Progresser les charges de max 5-10% par semaine",
+    "Arrêter si douleur articulaire aiguë",
+    "Respecter les jours de repos",
+    "Boire 2-3L d'eau par jour"
   ],
   "conseils": ["conseil 1", "conseil 2", "conseil 3", "conseil 4", "conseil 5"]
 }
 
-IMPORTANT: 
-- Génère des séances COMPLÈTES pour les semaines 1, 3 et 5 (les autres peuvent être vides)
-- Chaque exercice doit avoir: nom, series, repetitions, repos, muscle, conseil technique, securite (avec ⚠️), echauffement
-- Adapte les charges/reps selon la phase (semaines 1-2: reps hautes/charges légères, semaines 5-6: reps basses/charges lourdes)
-- Calcule les vrais macros précisément
-- Génère exactement ${nbSeances} séances pour la semaine 1
-- Adapte selon le morphotype ${morphotype || 'standard'}: ectomorphe=+calories, endomorphe=-calories, mésomorphe=équilibré`;
+RÈGLES STRICTES:
+- Génère exactement ${nbSeances} séances dans entrainement.seances
+- Chaque exercice: nom, series (nombre), repetitions (string), repos, muscle, conseil, securite (avec ⚠️), echauffement
+- Calcule les vrais macros (protéines: ${Math.round(poids * 2)}g, glucides et lipides selon objectif)
+- Inclus 5-6 repas dans nutrition
+- supplements: seulement si suppléments mentionnés: ${suppText}
+- JSON valide et complet OBLIGATOIRE`;
 
   try {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -212,7 +168,7 @@ IMPORTANT:
     let fullText = '';
     const stream = await client.messages.stream({
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -225,28 +181,59 @@ IMPORTANT:
 
     // Parse and save
     try {
+      // Try to extract and repair JSON
+      let jsonStr = null;
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        const data = JSON.parse(jsonMatch[0]);
-
-        // Add YouTube IDs to all weeks
-        if (data.programme6semaines) {
-          data.programme6semaines.forEach(sem => {
-            if (sem.seances) {
-              sem.seances.forEach(s => {
-                if (s.exercices) {
-                  s.exercices.forEach(e => {
-                    e.youtubeId = getYoutubeId(e.nom, sexe);
-                  });
-                }
-              });
+        jsonStr = jsonMatch[0];
+        // Try to repair truncated JSON by closing open brackets
+        let data = null;
+        try {
+          data = JSON.parse(jsonStr);
+        } catch(e) {
+          // Try to repair by finding last valid position
+          console.log('JSON truncated, attempting repair...');
+          // Count open/close braces and brackets
+          let openBraces = 0, openBrackets = 0;
+          let lastValidPos = 0;
+          for (let i = 0; i < jsonStr.length; i++) {
+            const c = jsonStr[i];
+            if (c === '{') openBraces++;
+            else if (c === '}') { openBraces--; if (openBraces === 0) lastValidPos = i; }
+            else if (c === '[') openBrackets++;
+            else if (c === ']') openBrackets--;
+          }
+          // Close all open structures
+          let repaired = jsonStr;
+          // Remove trailing comma if any
+          repaired = repaired.replace(/,\s*$/, '');
+          // Close open arrays and objects
+          for (let i = 0; i < openBrackets; i++) repaired += ']';
+          for (let i = 0; i < openBraces; i++) repaired += '}';
+          try {
+            data = JSON.parse(repaired);
+            console.log('JSON repaired successfully');
+          } catch(e2) {
+            // Last resort: use only up to last complete object
+            const truncated = jsonStr.substring(0, lastValidPos + 1);
+            try { data = JSON.parse(truncated); } catch(e3) {
+              throw new Error('JSON unrecoverable: ' + e2.message);
             }
+          }
+        }
+
+        if (!data) throw new Error('No data parsed');
+
+        // Add YouTube IDs
+        if (data.entrainement?.seances) {
+          data.entrainement.seances.forEach(s => {
+            if (s.exercices) s.exercices.forEach(e => { e.youtubeId = getYoutubeId(e.nom, sexe); });
           });
         }
 
-        // Also keep backward compat with entrainement field
-        if (!data.entrainement && data.programme6semaines && data.programme6semaines[0]) {
-          data.entrainement = { seances: data.programme6semaines[0].seances || [] };
+        // Keep backward compat
+        if (!data.entrainement && data.programme6semaines?.[0]?.seances) {
+          data.entrainement = { seances: data.programme6semaines[0].seances };
         }
 
         const countRow = await db.get2('SELECT COUNT(*) as count FROM programmes WHERE user_id=?', [req.user.id]);
@@ -259,9 +246,9 @@ IMPORTANT:
 
         const existingSuivi = await db.get2('SELECT id FROM suivi WHERE user_id=? AND semaine=?', [req.user.id, semaine]);
         if (!existingSuivi) {
-          const nbSeancesTotal = data.entrainement?.seances?.length || nbSeances;
+          const nbS = data.entrainement?.seances?.length || nbSeances;
           await db.run2('INSERT INTO suivi (user_id, semaine, poids, seances_total) VALUES (?,?,?,?)',
-            [req.user.id, semaine, poids, nbSeancesTotal]);
+            [req.user.id, semaine, poids, nbS]);
         }
 
         res.write(`data: ${JSON.stringify({ done: true, programme: data, semaine })}\n\n`);
