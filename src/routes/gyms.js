@@ -16,51 +16,58 @@ function formatTime(minutes) {
   return m > 0 ? `${h}h${m.toString().padStart(2,'0')}` : `${h}h`;
 }
 
-// GET NEARBY GYMS via OpenStreetMap Overpass API (free, no key needed)
 router.get('/', async (req, res) => {
   const { lat, lng } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'lat/lng manquants' });
 
   const userLat = parseFloat(lat);
   const userLng = parseFloat(lng);
-  const radius = 5000; // 5km
+  const radius = 8000; // 8km pour le Maroc
 
   try {
-    // Overpass API query — find gyms, fitness centers, sports clubs
-    const query = `
-      [out:json][timeout:15];
-      (
-        node["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
-        node["sport"="fitness"](around:${radius},${userLat},${userLng});
-        node["amenity"="gym"](around:${radius},${userLat},${userLng});
-        way["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
-        way["sport"="fitness"](around:${radius},${userLat},${userLng});
-      );
-      out center tags;
-    `;
+    // Requête Overpass élargie — tous les types de salles de sport
+    const query = `[out:json][timeout:25];
+(
+  node["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
+  node["leisure"="sports_centre"](around:${radius},${userLat},${userLng});
+  node["sport"="fitness"](around:${radius},${userLat},${userLng});
+  node["sport"="gym"](around:${radius},${userLat},${userLng});
+  node["amenity"="gym"](around:${radius},${userLat},${userLng});
+  node["amenity"="sports_centre"](around:${radius},${userLat},${userLng});
+  way["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
+  way["leisure"="sports_centre"](around:${radius},${userLat},${userLng});
+  way["sport"="fitness"](around:${radius},${userLat},${userLng});
+  way["sport"="gym"](around:${radius},${userLat},${userLng});
+  node["name"~"[Gg]ym|[Ff]itness|[Mm]usculation|[Ss]port|[Ss]alle",i]["amenity"!="restaurant"](around:${radius},${userLat},${userLng});
+);
+out center tags;`;
 
     const response = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'data=' + encodeURIComponent(query),
-      signal: AbortSignal.timeout(15000)
+      signal: AbortSignal.timeout(20000)
     });
 
-    if (!response.ok) throw new Error('Overpass API error');
+    if (!response.ok) throw new Error('Overpass error: ' + response.status);
     const data = await response.json();
 
+    const seen = new Set();
     const gyms = (data.elements || [])
-      .filter(el => el.tags?.name)
+      .filter(el => {
+        const name = el.tags?.name;
+        if (!name) return false;
+        if (seen.has(name.toLowerCase())) return false;
+        seen.add(name.toLowerCase());
+        return true;
+      })
       .map(el => {
         const glat = el.lat || el.center?.lat;
         const glng = el.lon || el.center?.lon;
+        if (!glat || !glng) return null;
         const dist = getDistance(userLat, userLng, glat, glng);
-        
-        // Walking: 5 km/h average
         const walkMin = (dist / 1000) / 5 * 60;
-        // Driving: 30 km/h in city average  
-        const driveMin = (dist / 1000) / 30 * 60 + 2; // +2 min parking
-
+        const driveMin = (dist / 1000) / 30 * 60 + 2;
         return {
           id: el.id,
           name: el.tags.name,
@@ -69,24 +76,26 @@ router.get('/', async (req, res) => {
           phone: el.tags.phone || el.tags['contact:phone'] || null,
           website: el.tags.website || el.tags['contact:website'] || null,
           opening_hours: el.tags.opening_hours || null,
-          lat: glat,
-          lng: glng,
+          lat: glat, lng: glng,
           distance: dist,
           walkTime: formatTime(walkMin),
           driveTime: formatTime(driveMin),
           distanceKm: dist < 1000 ? dist + 'm' : (dist/1000).toFixed(1) + 'km',
-          mapsUrl: `https://www.google.com/maps/dir/?api=1&destination=${glat},${glng}&travelmode=walking`
         };
       })
+      .filter(Boolean)
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 12);
+      .slice(0, 15);
 
-    res.json({ gyms, source: 'openstreetmap' });
+    // Si aucun résultat, chercher via Nominatim (geocoding)
+    if (gyms.length === 0) {
+      return res.json({ gyms: [], message: 'Aucune salle trouvée dans OpenStreetMap pour cette zone.' });
+    }
 
+    res.json({ gyms });
   } catch(e) {
     console.error('Gyms error:', e.message);
-    // Return empty with error message
-    res.json({ gyms: [], error: 'Impossible de charger les salles. Réessaie.' });
+    res.json({ gyms: [], error: e.message });
   }
 });
 
