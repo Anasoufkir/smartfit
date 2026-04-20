@@ -14,25 +14,39 @@
   --bg:#080808; --s1:#101010; --s2:#181818; --s3:#222; --border:#2a2a2a;
   --red:#e8341c; --orange:#ff6b1a; --green:#00d084; --blue:#0ea5e9;
   --yellow:#f5c518; --purple:#a855f7; --text:#f0f0f0; --muted:#555; --sub:#888;
+}
 
 /* LIGHT MODE */
 html.light {
-  --bg:#f5f5f5; --s1:#ffffff; --s2:#f0f0f0; --s3:#e8e8e8; --border:#e0e0e0;
-  --text:#111111; --muted:#999; --sub:#666;
+  --bg:#f2f2f2; --s1:#ffffff; --s2:#f7f7f7; --s3:#ebebeb; --border:#e0e0e0;
+  --text:#111111; --muted:#999; --sub:#555;
 }
-html.light .sidebar { background: #ffffff; }
-html.light .topbar { background: #ffffff; border-bottom: 1px solid #e0e0e0; }
-html.light .modal { background: #ffffff; }
-html.light .form-card { background: #ffffff; }
+html.light body { background: var(--bg); color: var(--text); }
+html.light .sidebar { background: #fff; border-right-color: #e0e0e0; }
+html.light .main-content { background: var(--bg); }
+html.light .topbar { background: #fff; border-bottom: 1px solid #e0e0e0; }
+html.light .modal { background: #fff; }
+html.light .form-card { background: #fff; border-color: #e0e0e0; }
+html.light .session-card, html.light .suivi-form, html.light .seances-tracker { background: #fff; border-color: #e0e0e0; }
+html.light .stat-card, html.light .week-card, html.light .action-card { background: #fff; border-color: #e0e0e0; }
 html.light input, html.light select, html.light textarea { background: #f5f5f5 !important; color: #111 !important; border-color: #ddd !important; }
-html.light .opt-card { background: #f5f5f5; border-color: #ddd; }
-html.light .opt-card.selected { background: rgba(232,52,28,.08); }
+html.light .opt-card { background: #f5f5f5; border-color: #ddd; color: #111; }
+html.light .opt-card.sel { background: rgba(232,52,28,.08); border-color: var(--red); }
+html.light .nav-item { color: #444; }
 html.light .nav-item:hover { background: #f0f0f0; }
-html.light .nav-item.on { background: rgba(232,52,28,.12); }
+html.light .nav-item.on { background: rgba(232,52,28,.1); color: var(--red); }
 html.light .ex-row { background: #f8f8f8; border-color: #e8e8e8; }
-html.light .week-card { background: #ffffff; border-color: #e8e8e8; }
-html.light .stat-card { background: #ffffff; border-color: #e8e8e8; }
-}
+html.light .prog-tab { background: #f0f0f0; color: #555; }
+html.light .prog-tab.on { background: var(--red); color: #fff; }
+html.light .msg-banner { background: #fff; }
+html.light .suivi-field input { background: #f5f5f5 !important; }
+html.light .auth-tab { background: #f0f0f0; color: #666; }
+html.light .auth-tab.on { background: var(--red); color: #fff; }
+html.light .field input, html.light .field select { background: #f5f5f5 !important; color: #111 !important; }
+html.light [style*="background:var(--s1)"] { background: #fff !important; }
+html.light [style*="background:var(--s2)"] { background: #f5f5f5 !important; }
+html.light .s-name, html.light .s-email { color: #111; }
+html.light .sidebar-logo span { color: #111; }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
