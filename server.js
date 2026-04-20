@@ -23,8 +23,10 @@ app.use('/api/programme/generate', aiLimiter);
 
 // Routes
 app.use('/api/auth', require('./src/routes/auth'));
+app.use('/api/auth', require('./src/routes/google-auth'));
 app.use('/api/user', require('./src/routes/user'));
 app.use('/api/programme', require('./src/routes/programme'));
+app.use('/api/gyms', require('./src/routes/gyms'));
 
 // Serve frontend
 app.get('*', (req, res) => {

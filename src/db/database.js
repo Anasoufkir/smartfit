@@ -30,7 +30,10 @@ db.exec(`
     jours TEXT,
     restrictions TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    google_id TEXT DEFAULT NULL,
+    morphotype TEXT DEFAULT NULL,
+    dob TEXT DEFAULT NULL
   );
 
   CREATE TABLE IF NOT EXISTS programmes (

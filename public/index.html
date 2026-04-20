@@ -58,6 +58,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 /* ── LOADING ── */
 #loading{display:none;position:fixed;inset:0;background:rgba(8,8,8,.97);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
 #loading.show{display:flex;}
+.gen-step{font-size:12px;color:var(--muted);padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.06);transition:.3s;display:flex;align-items:center;gap:8px}
+.gen-step.active{color:var(--text);border-color:rgba(232,52,28,.3);background:rgba(232,52,28,.06)}
+.gen-step.done{color:var(--green);border-color:rgba(0,208,132,.2);}
 .spin{width:60px;height:60px;border:3px solid var(--s3);border-top-color:var(--red);border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .load-txt{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--sub);}
@@ -372,8 +375,21 @@ html.light .suppl-dose{background:#f5f5f5;}
 <!-- LOADING -->
 <div id="loading">
   <div class="spin"></div>
-  <div class="load-txt">Génération en cours...</div>
-  <div class="load-sub">Analyse de ton profil et création de ton programme personnalisé</div>
+  <div class="load-txt" id="load-txt">Génération en cours...</div>
+  <div class="load-sub" id="load-sub">Analyse de ton profil</div>
+  <!-- Progress bar -->
+  <div style="width:280px;background:rgba(255,255,255,.08);border-radius:20px;height:6px;overflow:hidden;margin-top:8px">
+    <div id="gen-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--red),var(--orange));border-radius:20px;width:0%;transition:width .4s ease"></div>
+  </div>
+  <div id="gen-progress-pct" style="font-size:13px;color:var(--red);font-weight:700">0%</div>
+  <!-- Steps -->
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;width:280px">
+    <div class="gen-step" id="step-1">📊 Analyse du profil</div>
+    <div class="gen-step" id="step-2">🥗 Création du plan nutrition</div>
+    <div class="gen-step" id="step-3">💪 Génération des séances</div>
+    <div class="gen-step" id="step-4">📅 Programme 6 semaines</div>
+    <div class="gen-step" id="step-5">✅ Finalisation</div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -450,6 +466,15 @@ html.light .suppl-dose{background:#f5f5f5;}
       <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="ton@email.com"></div>
       <div class="field"><label>Mot de passe</label><input type="password" id="r-password" placeholder="Min 6 caractères"></div>
       <button class="btn-full" onclick="doRegister()">Créer mon compte →</button>
+      <div style="display:flex;align-items:center;gap:10px;margin:12px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:var(--muted)">OU</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <a href="/api/auth/google" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;border:1.5px solid #ddd;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Inscription avec Google
+      </a>
     </div>
 
     <!-- LOGIN -->
@@ -457,6 +482,15 @@ html.light .suppl-dose{background:#f5f5f5;}
       <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="ton@email.com"></div>
       <div class="field"><label>Mot de passe</label><input type="password" id="l-password" placeholder="Ton mot de passe"></div>
       <button class="btn-full" onclick="doLogin()">Se connecter</button>
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:12px;color:var(--muted)">OU</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <a href="/api/auth/google" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;border:1.5px solid #ddd;border-radius:12px;padding:12px;font-size:14px;font-weight:600;text-decoration:none;transition:.2s" onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='#fff'">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continuer avec Google
+      </a>
     </div>
   </div>
 </div>
@@ -486,6 +520,7 @@ html.light .suppl-dose{background:#f5f5f5;}
         <div class="nav-item" onclick="showView('suivi')"><span class="nav-icon">📊</span> Suivi & Progression</div>
         <div class="nav-item" onclick="showView('supplements')"><span class="nav-icon">💊</span> Suppléments</div>
         <div class="nav-item" onclick="showView('profile')"><span class="nav-icon">👤</span> Mon Profil</div>
+        <div class="nav-item" onclick="showView('salles')"><span class="nav-icon">🏋️</span> Salles proches</div>
       </nav>
       <div class="sidebar-footer">
         <button onclick="toggleTheme()" id="theme-btn" style="width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;margin-bottom:8px;">☀️ Mode jour</button>
@@ -736,6 +771,31 @@ html.light .suppl-dose{background:#f5f5f5;}
         <div id="suppl-content"></div>
       </div>
 
+
+      <!-- SALLES VIEW -->
+      <div class="view" id="view-salles">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;margin-bottom:8px">🏋️ SALLES PROCHES</div>
+        <p style="color:var(--sub);font-size:14px;margin-bottom:20px">Trouve les meilleures salles de sport autour de toi</p>
+        <div id="salles-locate-btn" style="text-align:center;padding:40px 20px">
+          <div style="font-size:48px;margin-bottom:16px">📍</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:8px">Localise-toi pour voir les salles proches</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">On va chercher les salles de sport autour de toi avec leurs avis</div>
+          <button class="btn-primary" onclick="locateAndFindGyms()" style="padding:14px 32px;font-size:15px">📍 Trouver les salles proches</button>
+        </div>
+        <div id="salles-loading" style="display:none;text-align:center;padding:40px">
+          <div class="spin" style="margin:0 auto 16px"></div>
+          <div style="color:var(--muted)">Recherche des salles...</div>
+        </div>
+        <div id="salles-list" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+            <div id="salles-count" style="font-size:13px;color:var(--muted)"></div>
+            <button onclick="locateAndFindGyms()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
+          </div>
+          <div id="salles-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
+        </div>
+        <div id="salles-error" style="display:none;text-align:center;padding:40px;color:var(--muted)"></div>
+      </div>
+
     </div><!-- end main-content -->
   </div><!-- end app-layout -->
 </div><!-- end page-app -->
@@ -750,11 +810,40 @@ let currentSemaine = 1;
 // ── INIT ──
 window.onload = () => {
   initTheme();
-  if (token && user) {
+
+  // Handle Google OAuth callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const googleToken = urlParams.get('google_token');
+  const googleUserStr = urlParams.get('google_user');
+  const googleError = urlParams.get('error');
+
+  if (googleError) {
+    toast(googleError === 'google_cancelled' ? 'Connexion Google annulée' : 'Erreur de connexion Google', 'err');
+    window.history.replaceState({}, '', '/');
+  } else if (googleToken && googleUserStr) {
+    try {
+      const googleUser = JSON.parse(decodeURIComponent(googleUserStr));
+      token = googleToken;
+      user = googleUser;
+      localStorage.setItem('sf_token', token);
+      localStorage.setItem('sf_user', JSON.stringify(user));
+      window.history.replaceState({}, '', '/');
+      showApp();
+      // Check if has programme
+      fetch('/api/programme/latest/current', { headers: authHeaders() })
+        .then(r => r.ok ? (loadDashboard(), showView('dashboard')) : showView('new-programme'))
+        .catch(() => showView('new-programme'));
+      toast(`Bienvenue ${user.nom} ! 🎉`);
+    } catch(e) {
+      window.history.replaceState({}, '', '/');
+    }
+  } else if (token && user) {
     showApp();
     loadDashboard();
   }
-  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const dateEl = document.getElementById('dash-date');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 };
 
 // ── TOAST ──
@@ -881,7 +970,84 @@ async function loginSuccess(data) {
   }
 }
 
-function doLogout() {
+function loadSalles() {
+  // Already loaded or showing
+}
+
+async function locateAndFindGyms() {
+  document.getElementById('salles-locate-btn').style.display = 'none';
+  document.getElementById('salles-loading').style.display = 'block';
+  document.getElementById('salles-list').style.display = 'none';
+  document.getElementById('salles-error').style.display = 'none';
+
+  if (!navigator.geolocation) {
+    showSallesError('La géolocalisation n\'est pas supportée par ton navigateur.');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const res = await fetch(`/api/gyms?lat=${latitude}&lng=${longitude}`, { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        renderSalles(data.gyms, latitude, longitude);
+      } catch(e) {
+        showSallesError('Erreur lors de la recherche des salles : ' + e.message);
+      }
+    },
+    (err) => {
+      showSallesError('Impossible d\'accéder à ta position. Vérifie les permissions de localisation.');
+    },
+    { timeout: 10000 }
+  );
+}
+
+function renderSalles(gyms, userLat, userLng) {
+  document.getElementById('salles-loading').style.display = 'none';
+  if (!gyms || gyms.length === 0) {
+    showSallesError('Aucune salle de sport trouvée à proximité.');
+    return;
+  }
+  document.getElementById('salles-list').style.display = 'block';
+  document.getElementById('salles-count').textContent = `${gyms.length} salles trouvées près de toi`;
+
+  const grid = document.getElementById('salles-grid');
+  grid.innerHTML = gyms.map(g => {
+    const stars = '⭐'.repeat(Math.round(g.rating || 0));
+    const openNow = g.opening_hours?.open_now;
+    const openBadge = openNow !== undefined
+      ? `<span style="font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;background:${openNow ? 'rgba(0,208,132,.1)' : 'rgba(239,68,68,.1)'};color:${openNow ? 'var(--green)' : '#ef4444'}">${openNow ? '🟢 Ouvert' : '🔴 Fermé'}</span>`
+      : '';
+    const distance = g.distance ? `<span style="font-size:12px;color:var(--muted)">📍 ${g.distance < 1000 ? Math.round(g.distance) + 'm' : (g.distance/1000).toFixed(1) + 'km'}</span>` : '';
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.name)}&query_place_id=${g.place_id}`;
+
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:.2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='var(--border)'">
+      ${g.photo ? `<img src="${g.photo}" style="width:100%;height:140px;object-fit:cover" onerror="this.style.display='none'">` : `<div style="width:100%;height:100px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:36px">🏋️</div>`}
+      <div style="padding:16px">
+        <div style="font-weight:700;font-size:15px;margin-bottom:6px">${g.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+          ${openBadge}
+          ${distance}
+        </div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">${g.vicinity || ''}</div>
+        ${g.rating ? `<div style="font-size:13px;margin-bottom:10px">${stars} <span style="color:var(--muted)">${g.rating}/5 (${g.user_ratings_total || 0} avis)</span></div>` : ''}
+        <a href="${mapsUrl}" target="_blank" style="display:inline-block;background:var(--red);color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;margin-top:4px">📍 Voir sur Maps</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showSallesError(msg) {
+  document.getElementById('salles-loading').style.display = 'none';
+  document.getElementById('salles-locate-btn').style.display = 'block';
+  const err = document.getElementById('salles-error');
+  err.style.display = 'block';
+  err.innerHTML = `<div style="font-size:32px;margin-bottom:12px">😕</div><div>${msg}</div>`;
+}
+
+
   localStorage.removeItem('sf_token');
   localStorage.removeItem('sf_user');
   location.reload();
@@ -928,7 +1094,7 @@ function showView(view) {
   if (viewEl) viewEl.classList.add('on');
 
   // Highlight nav item
-  const navMap = { dashboard:0, programme:1, 'new-programme':2, suivi:3, profile:4 };
+  const navMap = { dashboard:0, programme:1, 'new-programme':2, suivi:3, profile:4, salles:5 };
   const items = document.querySelectorAll('.nav-item');
   if (navMap[view] !== undefined && items[navMap[view]]) {
     items[navMap[view]].classList.add('on');
@@ -941,7 +1107,7 @@ function showView(view) {
   if (view === 'programme') loadProgramme();
   if (view === 'suivi') loadSuivi();
   if (view === 'profile') loadProfile();
-  if (view === 'dashboard') loadDashboard();
+  if (view === 'salles') loadSalles();
   if (view === 'new-programme') prefillNewProgramme();
 }
 
@@ -1340,6 +1506,41 @@ async function generateProgramme() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let isDone = false;
+    let totalChars = 0;
+    const estimatedTotal = 4000; // chars estimés
+    const steps = [
+      { threshold: 5, id: 'step-1', label: '📊 Analyse du profil' },
+      { threshold: 25, id: 'step-2', label: '🥗 Plan nutrition' },
+      { threshold: 50, id: 'step-3', label: '💪 Séances d\'entraînement' },
+      { threshold: 75, id: 'step-4', label: '📅 Programme 6 semaines' },
+      { threshold: 95, id: 'step-5', label: '✅ Finalisation' },
+    ];
+
+    function updateProgress(pct) {
+      const bar = document.getElementById('gen-progress-bar');
+      const pctEl = document.getElementById('gen-progress-pct');
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+      steps.forEach((s, i) => {
+        const el = document.getElementById(s.id);
+        if (!el) return;
+        if (pct >= s.threshold) {
+          el.classList.remove('active');
+          el.classList.add('done');
+        } else if (pct >= (steps[i-1]?.threshold || 0)) {
+          el.classList.add('active');
+          el.classList.remove('done');
+        }
+      });
+    }
+
+    // Reset progress
+    updateProgress(0);
+    steps.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) { el.classList.remove('active', 'done'); }
+    });
+    document.getElementById('step-1')?.classList.add('active');
 
     while (true) {
       const { done, value } = await reader.read();
@@ -1349,7 +1550,12 @@ async function generateProgramme() {
         if (line.startsWith('data: ')) {
           try {
             const d = JSON.parse(line.slice(6));
-            if (d.chunk) fullText += d.chunk;
+            if (d.chunk) {
+              fullText += d.chunk;
+              totalChars += d.chunk.length;
+              const pct = Math.min(92, (totalChars / estimatedTotal) * 100);
+              updateProgress(pct);
+            }
             if (d.done) isDone = true;
             if (d.error === 'session_expired') {
               toast('Session expirée, reconnecte-toi', 'err');
@@ -1362,6 +1568,8 @@ async function generateProgramme() {
     }
 
     if (isDone || fullText.length > 100) {
+      updateProgress(100);
+      await new Promise(r => setTimeout(r, 600));
       toast('Programme généré avec succès ! 💪');
       // Wait a moment for DB to save then navigate
       await new Promise(r => setTimeout(r, 800));
