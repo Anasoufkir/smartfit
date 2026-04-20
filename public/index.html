@@ -969,6 +969,59 @@ function renderSalles(gyms, userLat, userLng, source) {
        style="color:var(--red);font-size:12px;font-weight:700;text-decoration:none;margin-left:12px">🗺️ Voir sur Google Maps</a>
   `;
 
+  const grid = document.getElementById('salles-grid');
+  grid.innerHTML = gyms.map(g => {
+    const mapsWalk = `https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}&travelmode=walking`;
+    const mapsDrive = `https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}&travelmode=driving`;
+    const openStatus = g.opening_hours
+      ? (g.opening_hours.open_now ? '<span style="color:#00d084;font-size:11px">🟢 Ouvert</span>' : '<span style="color:#ef4444;font-size:11px">🔴 Fermé</span>')
+      : '';
+
+    return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px;transition:.2s"
+      onmouseover="this.style.borderColor='var(--red)';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
+
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+        <div style="width:44px;height:44px;background:rgba(232,52,28,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏋️</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:15px;margin-bottom:3px">${g.name}</div>
+          ${g.address ? `<div style="font-size:12px;color:var(--muted);margin-bottom:3px">${g.address}</div>` : ''}
+          <div style="display:flex;align-items:center;gap:8px">
+            ${g.rating ? `<span style="font-size:12px">⭐ ${g.rating} <span style="color:var(--muted)">(${g.user_ratings_total})</span></span>` : ''}
+            ${openStatus}
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:16px">📍</div>
+          <div style="font-size:13px;font-weight:700;color:var(--red)">${g.distanceKm}</div>
+          <div style="font-size:10px;color:var(--muted)">Distance</div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:16px">🚶</div>
+          <div style="font-size:13px;font-weight:700">${g.walkTime}</div>
+          <div style="font-size:10px;color:var(--muted)">À pied</div>
+        </div>
+        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:16px">🚗</div>
+          <div style="font-size:13px;font-weight:700">${g.driveTime}</div>
+          <div style="font-size:10px;color:var(--muted)">En voiture</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <a href="${mapsWalk}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(14,165,233,.1);color:#0ea5e9;border:1px solid rgba(14,165,233,.2);border-radius:10px;padding:9px;font-size:12px;font-weight:700;text-decoration:none">
+          🚶 À pied
+        </a>
+        <a href="${mapsDrive}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(232,52,28,.08);color:var(--red);border:1px solid rgba(232,52,28,.2);border-radius:10px;padding:9px;font-size:12px;font-weight:700;text-decoration:none">
+          🚗 En voiture
+        </a>
+      </div>
+      ${g.website ? `<a href="${g.website}" target="_blank" style="display:block;text-align:center;margin-top:8px;font-size:11px;color:var(--muted);text-decoration:none">🌐 Site web</a>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function showSallesError(msg) {
