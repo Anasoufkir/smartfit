@@ -237,6 +237,16 @@ RÈGLES STRICTES:
         }
 
         const countRow = await db.get2('SELECT COUNT(*) as count FROM programmes WHERE user_id=?', [req.user.id]);
+        
+        // Verify user exists
+        const userExists = await db.get2('SELECT id FROM users WHERE id=?', [req.user.id]);
+        if (!userExists) {
+          console.error('User not found in DB, token is stale. User ID:', req.user.id);
+          res.write(`data: ${JSON.stringify({ done: true, error: 'session_expired' })}\n\n`);
+          res.end();
+          return;
+        }
+
         const semaine = countRow.count + 1;
         await db.run2('INSERT INTO programmes (user_id, semaine, data) VALUES (?,?,?)',
           [req.user.id, semaine, JSON.stringify(data)]);

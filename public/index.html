@@ -1351,6 +1351,11 @@ async function generateProgramme() {
             const d = JSON.parse(line.slice(6));
             if (d.chunk) fullText += d.chunk;
             if (d.done) isDone = true;
+            if (d.error === 'session_expired') {
+              toast('Session expirée, reconnecte-toi', 'err');
+              doLogout();
+              return;
+            }
           } catch(e) {}
         }
       }
