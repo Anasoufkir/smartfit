@@ -49,9 +49,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .btn-secondary:hover{border-color:var(--red);color:var(--red);}
 
 /* ── AUTH MODAL ── */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
 .modal-overlay.show{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:36px;width:100%;max-width:440px;position:relative;}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:460px;position:relative;max-height:90vh;overflow-y:auto;margin:auto;}
 .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;}
 .modal-close:hover{background:var(--s2);color:var(--text);}
 .modal h2{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:1px;margin-bottom:6px;}
@@ -345,9 +345,13 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div id="form-register">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field"><label>Prénom</label><input type="text" id="r-prenom" placeholder="Prénom"></div>
-        <div class="field"><label>Nom</label><input type="text" id="r-nom" placeholder="Nom de famille"></div>
+        <div class="field"><label>Nom</label><input type="text" id="r-nom" placeholder="Nom"></div>
       </div>
-      <div class="field"><label>Date de naissance</label><input type="date" id="r-dob"></div>
+      <div class="field">
+        <label>Date de naissance</label>
+        <input type="date" id="r-dob" onchange="calcAge()" max="2010-01-01">
+        <div id="r-age-display" style="font-size:12px;color:var(--red);margin-top:4px;display:none"></div>
+      </div>
       <div class="field"><label>Sexe</label>
         <select id="r-sexe" style="width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:11px;padding:13px 15px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;appearance:none;">
           <option value="">Choisir...</option>
@@ -356,13 +360,35 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         </select>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field"><label>Poids (kg)</label><input type="number" id="r-poids" placeholder="Ex: 75"></div>
-        <div class="field"><label>Taille (cm)</label><input type="number" id="r-taille" placeholder="Ex: 175"></div>
+        <div class="field"><label>Poids (kg)</label><input type="number" id="r-poids" placeholder="Ex: 75" min="30" max="250"></div>
+        <div class="field"><label>Taille (cm)</label><input type="number" id="r-taille" placeholder="Ex: 175" min="100" max="230"></div>
       </div>
+
+      <div class="field">
+        <label>Morphotype <span style="font-size:11px;color:var(--muted)">(ta constitution corporelle)</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+          <label id="morph-ecto" onclick="selectMorph('ectomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
+            <div style="font-size:20px">🦴</div>
+            <div style="font-size:11px;font-weight:700;margin-top:4px">Ectomorphe</div>
+            <div style="font-size:10px;color:var(--muted)">Mince, métabolisme rapide</div>
+          </label>
+          <label id="morph-meso" onclick="selectMorph('mesomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
+            <div style="font-size:20px">💪</div>
+            <div style="font-size:11px;font-weight:700;margin-top:4px">Mésomorphe</div>
+            <div style="font-size:10px;color:var(--muted)">Musclé naturellement</div>
+          </label>
+          <label id="morph-endo" onclick="selectMorph('endomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
+            <div style="font-size:20px">⚖️</div>
+            <div style="font-size:11px;font-weight:700;margin-top:4px">Endomorphe</div>
+            <div style="font-size:10px;color:var(--muted)">Tendance à prendre du poids</div>
+          </label>
+        </div>
+        <input type="hidden" id="r-morphotype" value="">
+      </div>
+
       <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="ton@email.com"></div>
-      <div class="field"><label>Téléphone (optionnel)</label><input type="tel" id="r-tel" placeholder="+212 6XX XX XX XX"></div>
       <div class="field"><label>Mot de passe</label><input type="password" id="r-password" placeholder="Min 6 caractères"></div>
-      <button class="btn-full" onclick="doRegister()">Créer mon compte</button>
+      <button class="btn-full" onclick="doRegister()">Créer mon compte →</button>
     </div>
 
     <!-- LOGIN -->
@@ -473,6 +499,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         <div class="form-card">
           <h3>✨ NOUVEAU PROGRAMME</h3>
           <p>Mets à jour ton profil pour générer un programme adapté à ton état actuel</p>
+          <div id="morph-info-banner" style="display:none;background:rgba(232,52,28,.08);border:1px solid rgba(232,52,28,.2);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:16px;font-weight:600;"></div>
           <div class="err-box" id="gen-err"></div>
 
           <div class="form-label">Informations physiques</div>
@@ -627,6 +654,28 @@ function authErr(msg) {
   el.classList.add('show');
 }
 
+function calcAge() {
+  const dob = document.getElementById('r-dob').value;
+  if (!dob) return;
+  const age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
+  const display = document.getElementById('r-age-display');
+  display.style.display = 'block';
+  display.textContent = `✓ ${age} ans`;
+}
+
+let selectedMorph = '';
+function selectMorph(type) {
+  selectedMorph = type;
+  document.getElementById('r-morphotype').value = type;
+  ['ecto','meso','endo'].forEach(m => {
+    const el = document.getElementById(`morph-${m}`);
+    if (el) { el.style.border = '1.5px solid var(--border)'; el.style.background = 'transparent'; }
+  });
+  const map = { ectomorphe:'ecto', mesomorphe:'meso', endomorphe:'endo' };
+  const sel = document.getElementById(`morph-${map[type]}`);
+  if (sel) { sel.style.border = '1.5px solid var(--red)'; sel.style.background = 'rgba(232,52,28,.08)'; }
+}
+
 async function doRegister() {
   const prenom = document.getElementById('r-prenom').value.trim();
   const nom = document.getElementById('r-nom').value.trim();
@@ -636,7 +685,11 @@ async function doRegister() {
   const poids = document.getElementById('r-poids').value;
   const taille = document.getElementById('r-taille').value;
   const dob = document.getElementById('r-dob').value;
+  const morphotype = document.getElementById('r-morphotype')?.value || '';
   const fullNom = `${prenom} ${nom}`.trim();
+
+  let age = null;
+  if (dob) age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
 
   if (!prenom || !nom) return authErr('Entre ton prénom et nom');
   if (!email) return authErr('Entre ton email');
@@ -645,7 +698,7 @@ async function doRegister() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom: fullNom, email, password, sexe, poids, taille, dob })
+      body: JSON.stringify({ nom: fullNom, email, password, sexe, poids, taille, age, dob, morphotype })
     });
     const data = await res.json();
     if (!res.ok) return authErr(data.error);
@@ -761,6 +814,15 @@ function prefillNewProgramme() {
   if (user.taille) document.getElementById('g-taille').value = user.taille;
   if (user.age) document.getElementById('g-age').value = user.age;
   if (user.sexe) document.getElementById('g-sexe').value = user.sexe;
+
+  // Afficher le morphotype si disponible
+  const morphInfo = document.getElementById('morph-info-banner');
+  if (user.morphotype && morphInfo) {
+    const morphLabels = { ectomorphe:'🦴 Ectomorphe — Mince, métabolisme rapide', mesomorphe:'💪 Mésomorphe — Musclé naturellement', endomorphe:'⚖️ Endomorphe — Tendance à stocker' };
+    morphInfo.textContent = `Ton morphotype : ${morphLabels[user.morphotype] || user.morphotype}`;
+    morphInfo.style.display = 'block';
+  }
+
   if (user.objectif) {
     const card = document.querySelector(`[name="g-obj"][value="${user.objectif}"]`);
     if (card) selOpt(card.closest('.opt-card'), 'g-obj');
