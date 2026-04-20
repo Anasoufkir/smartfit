@@ -16,86 +16,94 @@ function formatTime(minutes) {
   return m > 0 ? `${h}h${m.toString().padStart(2,'0')}` : `${h}h`;
 }
 
+function calcTimes(dist) {
+  return {
+    walkTime: formatTime((dist/1000)/5*60),
+    driveTime: formatTime((dist/1000)/30*60 + 2),
+    distanceKm: dist < 1000 ? dist + 'm' : (dist/1000).toFixed(1) + 'km'
+  };
+}
+
 router.get('/', async (req, res) => {
-  const { lat, lng } = req.query;
+  const { lat, lng, radius } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'lat/lng manquants' });
 
   const userLat = parseFloat(lat);
   const userLng = parseFloat(lng);
-  const radius = 8000; // 8km pour le Maroc
+  const searchRadius = parseInt(radius) || 5000;
+  const apiKey = process.env.GOOGLE_PLACES_KEY;
 
+  // ── Google Places (si clé disponible) ──
+  if (apiKey) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${userLat},${userLng}&radius=${searchRadius}&type=gym&key=${apiKey}&language=fr`;
+      const r = await fetch(url);
+      const data = await r.json();
+
+      if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
+        const gyms = (data.results || []).map(p => {
+          const dist = getDistance(userLat, userLng, p.geometry.location.lat, p.geometry.location.lng);
+          let photo = null;
+          if (p.photos?.[0]?.photo_reference) {
+            photo = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photos[0].photo_reference}&key=${apiKey}`;
+          }
+          return {
+            name: p.name, address: p.vicinity || '',
+            rating: p.rating || null, user_ratings_total: p.user_ratings_total || 0,
+            opening_hours: p.opening_hours || null, photo,
+            lat: p.geometry.location.lat, lng: p.geometry.location.lng,
+            distance: dist, ...calcTimes(dist)
+          };
+        }).sort((a,b) => a.distance - b.distance);
+        return res.json({ gyms, source: 'google' });
+      }
+    } catch(e) {
+      console.error('Google Places error:', e.message);
+    }
+  }
+
+  // ── OpenStreetMap Overpass (fallback) ──
   try {
-    // Requête Overpass élargie — tous les types de salles de sport
     const query = `[out:json][timeout:25];
 (
-  node["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
-  node["leisure"="sports_centre"](around:${radius},${userLat},${userLng});
-  node["sport"="fitness"](around:${radius},${userLat},${userLng});
-  node["sport"="gym"](around:${radius},${userLat},${userLng});
-  node["amenity"="gym"](around:${radius},${userLat},${userLng});
-  node["amenity"="sports_centre"](around:${radius},${userLat},${userLng});
-  way["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
-  way["leisure"="sports_centre"](around:${radius},${userLat},${userLng});
-  way["sport"="fitness"](around:${radius},${userLat},${userLng});
-  way["sport"="gym"](around:${radius},${userLat},${userLng});
-  node["name"~"[Gg]ym|[Ff]itness|[Mm]usculation|[Ss]port|[Ss]alle",i]["amenity"!="restaurant"](around:${radius},${userLat},${userLng});
+  node["leisure"="fitness_centre"](around:${searchRadius},${userLat},${userLng});
+  node["leisure"="sports_centre"](around:${searchRadius},${userLat},${userLng});
+  node["sport"="fitness"](around:${searchRadius},${userLat},${userLng});
+  node["sport"="gym"](around:${searchRadius},${userLat},${userLng});
+  node["amenity"="gym"](around:${searchRadius},${userLat},${userLng});
+  way["leisure"="fitness_centre"](around:${searchRadius},${userLat},${userLng});
+  way["leisure"="sports_centre"](around:${searchRadius},${userLat},${userLng});
+  node["name"~"[Gg]ym|[Ff]itness|[Mm]usculation|[Ss]port|[Ss]alle",i](around:${searchRadius},${userLat},${userLng});
 );
 out center tags;`;
 
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
+    const r = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'data=' + encodeURIComponent(query),
       signal: AbortSignal.timeout(20000)
     });
-
-    if (!response.ok) throw new Error('Overpass error: ' + response.status);
-    const data = await response.json();
-
+    const data = await r.json();
     const seen = new Set();
     const gyms = (data.elements || [])
-      .filter(el => {
-        const name = el.tags?.name;
-        if (!name) return false;
-        if (seen.has(name.toLowerCase())) return false;
-        seen.add(name.toLowerCase());
-        return true;
-      })
+      .filter(el => { if (!el.tags?.name || seen.has(el.tags.name.toLowerCase())) return false; seen.add(el.tags.name.toLowerCase()); return true; })
       .map(el => {
         const glat = el.lat || el.center?.lat;
         const glng = el.lon || el.center?.lon;
         if (!glat || !glng) return null;
         const dist = getDistance(userLat, userLng, glat, glng);
-        const walkMin = (dist / 1000) / 5 * 60;
-        const driveMin = (dist / 1000) / 30 * 60 + 2;
-        return {
-          id: el.id,
-          name: el.tags.name,
-          address: [el.tags['addr:street'], el.tags['addr:housenumber'], el.tags['addr:city']]
-            .filter(Boolean).join(' ') || el.tags['addr:full'] || '',
-          phone: el.tags.phone || el.tags['contact:phone'] || null,
-          website: el.tags.website || el.tags['contact:website'] || null,
+        return { name: el.tags.name, address: [el.tags['addr:street'], el.tags['addr:housenumber'], el.tags['addr:city']].filter(Boolean).join(' ') || '',
+          phone: el.tags.phone || null, website: el.tags.website || null,
           opening_hours: el.tags.opening_hours || null,
-          lat: glat, lng: glng,
-          distance: dist,
-          walkTime: formatTime(walkMin),
-          driveTime: formatTime(driveMin),
-          distanceKm: dist < 1000 ? dist + 'm' : (dist/1000).toFixed(1) + 'km',
-        };
+          lat: glat, lng: glng, distance: dist, ...calcTimes(dist) };
       })
       .filter(Boolean)
-      .sort((a, b) => a.distance - b.distance)
+      .sort((a,b) => a.distance - b.distance)
       .slice(0, 15);
 
-    // Si aucun résultat, chercher via Nominatim (geocoding)
-    if (gyms.length === 0) {
-      return res.json({ gyms: [], message: 'Aucune salle trouvée dans OpenStreetMap pour cette zone.' });
-    }
-
-    res.json({ gyms });
+    res.json({ gyms, source: 'openstreetmap' });
   } catch(e) {
-    console.error('Gyms error:', e.message);
-    res.json({ gyms: [], error: e.message });
+    res.json({ gyms: [], error: 'Erreur de recherche: ' + e.message });
   }
 });
 

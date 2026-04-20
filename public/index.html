@@ -737,12 +737,20 @@ html.light .suppl-dose{background:#f5f5f5;}
       <div class="view" id="view-salles">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;margin-bottom:8px">🏋️ SALLES PROCHES</div>
         <p style="color:var(--sub);font-size:14px;margin-bottom:20px">Trouve les meilleures salles de sport autour de toi</p>
-        <div id="salles-locate-btn" style="text-align:center;padding:40px 20px">
-          <div style="font-size:48px;margin-bottom:16px">📍</div>
-          <div style="font-size:16px;font-weight:700;margin-bottom:8px">Localise-toi pour voir les salles proches</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">On va chercher les salles de sport autour de toi avec leurs avis</div>
-          <button class="btn-primary" onclick="locateAndFindGyms()" style="padding:14px 32px;font-size:15px">📍 Trouver les salles proches</button>
+
+        <!-- Radius selector + search -->
+        <div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px">
+          <div style="font-size:13px;font-weight:700;color:var(--sub);margin-bottom:12px">RAYON DE RECHERCHE</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="radius-btns">
+            <button onclick="setRadius(1)" class="radius-btn" data-r="1" style="padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s">1 km</button>
+            <button onclick="setRadius(2)" class="radius-btn" data-r="2" style="padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s">2 km</button>
+            <button onclick="setRadius(5)" class="radius-btn active" data-r="5" style="padding:8px 16px;border-radius:10px;border:2px solid var(--red);background:rgba(232,52,28,.1);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;transition:.2s">5 km</button>
+            <button onclick="setRadius(10)" class="radius-btn" data-r="10" style="padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s">10 km</button>
+            <button onclick="setRadius(20)" class="radius-btn" data-r="20" style="padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.2s">20 km</button>
+          </div>
+          <button class="btn-primary" onclick="locateAndFindGyms()" style="width:100%;padding:14px;font-size:15px">📍 Trouver les salles proches</button>
         </div>
+
         <div id="salles-loading" style="display:none;text-align:center;padding:40px">
           <div class="spin" style="margin:0 auto 16px"></div>
           <div style="color:var(--muted)">Recherche des salles...</div>
@@ -750,7 +758,6 @@ html.light .suppl-dose{background:#f5f5f5;}
         <div id="salles-list" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
             <div id="salles-count" style="font-size:13px;color:var(--muted)"></div>
-            <button onclick="locateAndFindGyms()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer">🔄 Actualiser</button>
           </div>
           <div id="salles-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px"></div>
         </div>
@@ -901,12 +908,21 @@ async function loginSuccess(data) {
   }
 }
 
-function loadSalles() {
-  // Already loaded or showing
+let currentRadius = 5;
+
+function setRadius(km) {
+  currentRadius = km;
+  document.querySelectorAll('.radius-btn').forEach(btn => {
+    const active = parseInt(btn.dataset.r) === km;
+    btn.style.border = active ? '2px solid var(--red)' : '2px solid var(--border)';
+    btn.style.background = active ? 'rgba(232,52,28,.1)' : 'transparent';
+    btn.style.color = active ? 'var(--red)' : 'var(--muted)';
+  });
 }
 
+function loadSalles() {}
+
 async function locateAndFindGyms() {
-  document.getElementById('salles-locate-btn').style.display = 'none';
   document.getElementById('salles-loading').style.display = 'block';
   document.getElementById('salles-list').style.display = 'none';
   document.getElementById('salles-error').style.display = 'none';
@@ -920,86 +936,43 @@ async function locateAndFindGyms() {
     async (pos) => {
       const { latitude, longitude } = pos.coords;
       try {
-        const res = await fetch(`/api/gyms?lat=${latitude}&lng=${longitude}`, { headers: authHeaders() });
+        const res = await fetch(`/api/gyms?lat=${latitude}&lng=${longitude}&radius=${currentRadius * 1000}`, { headers: authHeaders() });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        renderSalles(data.gyms, latitude, longitude);
+        if (data.error && (!data.gyms || data.gyms.length === 0)) {
+          showSallesError('Erreur : ' + data.error);
+          return;
+        }
+        renderSalles(data.gyms || [], latitude, longitude, data.source);
       } catch(e) {
-        showSallesError('Erreur lors de la recherche des salles : ' + e.message);
+        showSallesError('Erreur lors de la recherche : ' + e.message);
       }
     },
     (err) => {
-      showSallesError('Impossible d\'accéder à ta position. Vérifie les permissions de localisation.');
+      showSallesError('Impossible d\'accéder à ta position. Autorise la localisation dans ton navigateur.');
     },
-    { timeout: 10000 }
+    { timeout: 10000, enableHighAccuracy: true }
   );
 }
 
-function renderSalles(gyms, userLat, userLng) {
+function renderSalles(gyms, userLat, userLng, source) {
   document.getElementById('salles-loading').style.display = 'none';
   if (!gyms || gyms.length === 0) {
-    showSallesError('Aucune salle de sport trouvée à proximité (rayon 5km).<br><br>Essaie dans une zone plus urbaine.');
+    showSallesError(`Aucune salle trouvée dans un rayon de ${currentRadius}km.<br><br>
+      <a href="https://www.google.com/maps/search/salle+de+sport/@${userLat},${userLng},14z" target="_blank" 
+         style="color:var(--red);font-weight:700;text-decoration:none">🗺️ Chercher sur Google Maps →</a>`);
     return;
   }
   document.getElementById('salles-list').style.display = 'block';
-  document.getElementById('salles-count').textContent = `${gyms.length} salle${gyms.length > 1 ? 's' : ''} trouvée${gyms.length > 1 ? 's' : ''} dans un rayon de 5km`;
+  document.getElementById('salles-count').innerHTML = `
+    <span>${gyms.length} salle${gyms.length > 1 ? 's' : ''} dans un rayon de <strong style="color:var(--red)">${currentRadius} km</strong></span>
+    <a href="https://www.google.com/maps/search/salle+de+sport/@${userLat},${userLng},${currentRadius < 5 ? 15 : 13}z" target="_blank" 
+       style="color:var(--red);font-size:12px;font-weight:700;text-decoration:none;margin-left:12px">🗺️ Voir sur Google Maps</a>
+  `;
 
-  const grid = document.getElementById('salles-grid');
-  grid.innerHTML = gyms.map(g => {
-    const mapsWalk = `https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}&travelmode=walking`;
-    const mapsDrive = `https://www.google.com/maps/dir/?api=1&destination=${g.lat},${g.lng}&travelmode=driving`;
-    const mapsView = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(g.name)}&query_place_id=${g.lat},${g.lng}`;
-
-    const hoursColor = g.opening_hours ? '#888' : '#555';
-
-    return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px;transition:.2s;cursor:default" onmouseover="this.style.borderColor='var(--red)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none'">
-      
-      <!-- Header -->
-      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
-        <div style="width:44px;height:44px;background:rgba(232,52,28,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏋️</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
-          ${g.address ? `<div style="font-size:12px;color:var(--muted)">${g.address}</div>` : ''}
-          ${g.opening_hours ? `<div style="font-size:11px;color:${hoursColor};margin-top:2px">🕐 ${g.opening_hours}</div>` : ''}
-        </div>
-      </div>
-
-      <!-- Distance & temps -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:18px">📍</div>
-          <div style="font-size:13px;font-weight:700;color:var(--red)">${g.distanceKm}</div>
-          <div style="font-size:10px;color:var(--muted)">Distance</div>
-        </div>
-        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:18px">🚶</div>
-          <div style="font-size:13px;font-weight:700">${g.walkTime}</div>
-          <div style="font-size:10px;color:var(--muted)">À pied</div>
-        </div>
-        <div style="background:var(--s2);border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:18px">🚗</div>
-          <div style="font-size:13px;font-weight:700">${g.driveTime}</div>
-          <div style="font-size:10px;color:var(--muted)">En voiture</div>
-        </div>
-      </div>
-
-      <!-- Boutons itinéraire -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <a href="${mapsWalk}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(14,165,233,.1);color:#0ea5e9;border:1px solid rgba(14,165,233,.2);border-radius:10px;padding:9px;font-size:12px;font-weight:700;text-decoration:none;transition:.2s" onmouseover="this.style.background='rgba(14,165,233,.2)'" onmouseout="this.style.background='rgba(14,165,233,.1)'">
-          🚶 À pied
-        </a>
-        <a href="${mapsDrive}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(232,52,28,.08);color:var(--red);border:1px solid rgba(232,52,28,.2);border-radius:10px;padding:9px;font-size:12px;font-weight:700;text-decoration:none;transition:.2s" onmouseover="this.style.background='rgba(232,52,28,.15)'" onmouseout="this.style.background='rgba(232,52,28,.08)'">
-          🚗 En voiture
-        </a>
-      </div>
-      ${g.website ? `<a href="${g.website}" target="_blank" style="display:block;text-align:center;margin-top:8px;font-size:11px;color:var(--muted);text-decoration:none">🌐 Site web</a>` : ''}
-    </div>`;
-  }).join('');
 }
 
 function showSallesError(msg) {
   document.getElementById('salles-loading').style.display = 'none';
-  document.getElementById('salles-locate-btn').style.display = 'block';
   const err = document.getElementById('salles-error');
   err.style.display = 'block';
   err.innerHTML = `<div style="font-size:32px;margin-bottom:12px">😕</div><div>${msg}</div>`;
