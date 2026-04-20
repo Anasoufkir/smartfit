@@ -421,59 +421,20 @@ html.light .suppl-dose{background:#f5f5f5;}
     <!-- REGISTER -->
     <div id="form-register">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field"><label>Prénom</label><input type="text" id="r-prenom" placeholder="Prénom"></div>
-        <div class="field"><label>Nom</label><input type="text" id="r-nom" placeholder="Nom"></div>
+        <div class="field"><label>Prénom</label><input type="text" id="r-prenom" placeholder="Prénom" autocomplete="given-name"></div>
+        <div class="field"><label>Nom</label><input type="text" id="r-nom" placeholder="Nom" autocomplete="family-name"></div>
       </div>
-      <div class="field">
-        <label>Date de naissance</label>
-        <input type="date" id="r-dob" onchange="calcAge()" max="2010-01-01">
-        <div id="r-age-display" style="font-size:12px;color:var(--red);margin-top:4px;display:none"></div>
-      </div>
-      <div class="field"><label>Sexe</label>
-        <select id="r-sexe" style="width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:11px;padding:13px 15px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);outline:none;appearance:none;">
-          <option value="">Choisir...</option>
-          <option value="homme">Homme</option>
-          <option value="femme">Femme</option>
-        </select>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field"><label>Poids (kg)</label><input type="number" id="r-poids" placeholder="Ex: 75" min="30" max="250"></div>
-        <div class="field"><label>Taille (cm)</label><input type="number" id="r-taille" placeholder="Ex: 175" min="100" max="230"></div>
-      </div>
-
-      <div class="field">
-        <label>Morphotype <span style="font-size:11px;color:var(--muted)">(ta constitution corporelle)</span></label>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
-          <label id="morph-ecto" onclick="selectMorph('ectomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
-            <div style="font-size:20px">🦴</div>
-            <div style="font-size:11px;font-weight:700;margin-top:4px">Ectomorphe</div>
-            <div style="font-size:10px;color:var(--muted)">Mince, métabolisme rapide</div>
-          </label>
-          <label id="morph-meso" onclick="selectMorph('mesomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
-            <div style="font-size:20px">💪</div>
-            <div style="font-size:11px;font-weight:700;margin-top:4px">Mésomorphe</div>
-            <div style="font-size:10px;color:var(--muted)">Musclé naturellement</div>
-          </label>
-          <label id="morph-endo" onclick="selectMorph('endomorphe')" style="cursor:pointer;border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;transition:.2s">
-            <div style="font-size:20px">⚖️</div>
-            <div style="font-size:11px;font-weight:700;margin-top:4px">Endomorphe</div>
-            <div style="font-size:10px;color:var(--muted)">Tendance à prendre du poids</div>
-          </label>
-        </div>
-        <input type="hidden" id="r-morphotype" value="">
-      </div>
-
-      <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="ton@email.com"></div>
-      <div class="field"><label>Mot de passe</label><input type="password" id="r-password" placeholder="Min 6 caractères"></div>
+      <div class="field"><label>Email</label><input type="email" id="r-email" placeholder="ton@email.com" autocomplete="email"></div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="r-password" placeholder="Min 6 caractères" autocomplete="new-password"></div>
       <button class="btn-full" onclick="doRegister()">Créer mon compte →</button>
       <div style="display:flex;align-items:center;gap:10px;margin:14px 0 8px">
         <div style="flex:1;height:1px;background:var(--border)"></div>
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap">OU CONTINUER AVEC</span>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap">OU</span>
         <div style="flex:1;height:1px;background:var(--border)"></div>
       </div>
-      <a href="/api/auth/google" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;border:2px solid #ddd;border-radius:12px;padding:13px;font-size:14px;font-weight:700;text-decoration:none;margin-bottom:4px;transition:.15s" onmouseover="this.style.borderColor='#4285F4'" onmouseout="this.style.borderColor='#ddd'">
+      <a href="/api/auth/google" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#333;border:2px solid #ddd;border-radius:12px;padding:13px;font-size:14px;font-weight:700;text-decoration:none;transition:.15s" onmouseover="this.style.borderColor='#4285F4'" onmouseout="this.style.borderColor='#ddd'">
         <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        <span>Google</span>
+        Continuer avec Google
       </a>
     </div>
 
@@ -880,58 +841,28 @@ function authErr(msg) {
   el.classList.add('show');
 }
 
-function calcAge() {
-  const dob = document.getElementById('r-dob').value;
-  if (!dob) return;
-  const age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
-  const display = document.getElementById('r-age-display');
-  display.style.display = 'block';
-  display.textContent = `✓ ${age} ans`;
-}
-
-let selectedMorph = '';
-function selectMorph(type) {
-  selectedMorph = type;
-  document.getElementById('r-morphotype').value = type;
-  ['ecto','meso','endo'].forEach(m => {
-    const el = document.getElementById(`morph-${m}`);
-    if (el) { el.style.border = '1.5px solid var(--border)'; el.style.background = 'transparent'; }
-  });
-  const map = { ectomorphe:'ecto', mesomorphe:'meso', endomorphe:'endo' };
-  const sel = document.getElementById(`morph-${map[type]}`);
-  if (sel) { sel.style.border = '1.5px solid var(--red)'; sel.style.background = 'rgba(232,52,28,.08)'; }
-}
-
 async function doRegister() {
   const prenom = document.getElementById('r-prenom').value.trim();
   const nom = document.getElementById('r-nom').value.trim();
   const email = document.getElementById('r-email').value.trim();
   const password = document.getElementById('r-password').value;
-  const sexe = document.getElementById('r-sexe').value;
-  const poids = document.getElementById('r-poids').value;
-  const taille = document.getElementById('r-taille').value;
-  const dob = document.getElementById('r-dob').value;
-  const morphotype = document.getElementById('r-morphotype')?.value || '';
   const fullNom = `${prenom} ${nom}`.trim();
-
-  let age = null;
-  if (dob) age = Math.floor((new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000));
 
   if (!prenom || !nom) return authErr('Entre ton prénom et nom');
   if (!email) return authErr('Entre ton email');
   if (!password || password.length < 6) return authErr('Mot de passe trop court (min 6 caractères)');
+
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom: fullNom, email, password, sexe, poids, taille, age, dob, morphotype })
+      body: JSON.stringify({ nom: fullNom, email, password })
     });
     const data = await res.json();
     if (!res.ok) return authErr(data.error);
     loginSuccess(data);
   } catch { authErr('Erreur de connexion'); }
 }
-
 async function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const password = document.getElementById('l-password').value;
