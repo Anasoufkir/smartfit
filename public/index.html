@@ -1074,7 +1074,7 @@ function showSallesError(msg) {
   err.innerHTML = `<div style="font-size:32px;margin-bottom:12px">😕</div><div>${msg}</div>`;
 }
 
-
+function doLogout() {
   localStorage.removeItem('sf_token');
   localStorage.removeItem('sf_user');
   location.reload();
