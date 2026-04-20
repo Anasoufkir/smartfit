@@ -33,32 +33,55 @@ router.get('/', async (req, res) => {
   const searchRadius = parseInt(radius) || 5000;
   const apiKey = process.env.GOOGLE_PLACES_KEY;
 
-  // ── Google Places (si clé disponible) ──
+  // ── Google Places New API ──
   if (apiKey) {
     try {
-      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${userLat},${userLng}&radius=${searchRadius}&type=gym&key=${apiKey}&language=fr`;
-      const r = await fetch(url);
-      const data = await r.json();
-
-      if (data.status === 'OK' || data.status === 'ZERO_RESULTS') {
-        const gyms = (data.results || []).map(p => {
-          const dist = getDistance(userLat, userLng, p.geometry.location.lat, p.geometry.location.lng);
-          let photo = null;
-          if (p.photos?.[0]?.photo_reference) {
-            photo = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${p.photos[0].photo_reference}&key=${apiKey}`;
+      const body = JSON.stringify({
+        includedTypes: ['gym', 'fitness_center', 'sports_complex'],
+        maxResultCount: 20,
+        locationRestriction: {
+          circle: {
+            center: { latitude: userLat, longitude: userLng },
+            radius: searchRadius
           }
+        }
+      });
+
+      const r = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.currentOpeningHours,places.location,places.websiteUri,places.internationalPhoneNumber'
+        },
+        body,
+        signal: AbortSignal.timeout(10000)
+      });
+
+      const data = await r.json();
+      if (data.places && data.places.length > 0) {
+        const gyms = data.places.map(p => {
+          const glat = p.location?.latitude;
+          const glng = p.location?.longitude;
+          const dist = getDistance(userLat, userLng, glat, glng);
           return {
-            name: p.name, address: p.vicinity || '',
-            rating: p.rating || null, user_ratings_total: p.user_ratings_total || 0,
-            opening_hours: p.opening_hours || null, photo,
-            lat: p.geometry.location.lat, lng: p.geometry.location.lng,
+            name: p.displayName?.text || 'Salle de sport',
+            address: p.formattedAddress || '',
+            rating: p.rating || null,
+            user_ratings_total: p.userRatingCount || 0,
+            opening_hours: p.currentOpeningHours?.openNow !== undefined
+              ? { open_now: p.currentOpeningHours.openNow }
+              : null,
+            website: p.websiteUri || null,
+            phone: p.internationalPhoneNumber || null,
+            lat: glat, lng: glng,
             distance: dist, ...calcTimes(dist)
           };
         }).sort((a,b) => a.distance - b.distance);
         return res.json({ gyms, source: 'google' });
       }
     } catch(e) {
-      console.error('Google Places error:', e.message);
+      console.error('Google Places New error:', e.message);
     }
   }
 
