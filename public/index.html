@@ -2,11 +2,19 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>SmartFit — Plateforme Fitness Personnalisée</title>
+<link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="shortcut icon" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#e8341c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SmartFit">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Ta plateforme fitness personnalisée — programme nutrition, musculation et suivi de progression">
+<!-- iOS splash screens -->
+<link rel="apple-touch-startup-image" href="/icons/icon-512.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -486,6 +494,9 @@ html.light .suppl-dose{background:#f5f5f5;}
       <div class="sidebar-footer">
         <button onclick="toggleTheme()" id="theme-btn" style="width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;margin-bottom:8px;">☀️ Mode jour</button>
         <button class="btn-logout" onclick="doLogout()">🚪 Se déconnecter</button>
+        <button id="pwa-install-btn" onclick="installPWA()" style="display:none;width:100%;background:linear-gradient(135deg,var(--red),var(--orange));color:#fff;border:none;padding:10px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">
+          📲 Installer l'app
+        </button>
       </div>
     </div>
 
@@ -777,6 +788,13 @@ let currentSemaine = 1;
 
 // ── INIT ──
 window.onload = () => {
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error:', e));
+  }
+
   initTheme();
 
   // Handle Google OAuth callback
@@ -1030,6 +1048,36 @@ function showSallesError(msg) {
   err.style.display = 'block';
   err.innerHTML = `<div style="font-size:32px;margin-bottom:12px">😕</div><div>${msg}</div>`;
 }
+
+// ── PWA INSTALL ──
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'block';
+});
+
+async function installPWA() {
+  if (!deferredPrompt) {
+    toast('Pour installer: Menu navigateur → "Ajouter à l\'écran d\'accueil"');
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') {
+    toast('SmartFit installé sur ton téléphone ! 🎉');
+    document.getElementById('pwa-install-btn').style.display = 'none';
+  }
+  deferredPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  toast('SmartFit installé ! 🎉');
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.style.display = 'none';
+});
 
 function doLogout() {
   localStorage.removeItem('sf_token');
