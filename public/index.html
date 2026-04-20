@@ -7,6 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="shortcut icon" href="/favicon.svg">
 <meta name="theme-color" content="#e8341c">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -113,6 +114,31 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .sidebar-footer{padding:16px 12px;border-top:1px solid var(--border);}
 .btn-logout{width:100%;background:none;border:1px solid var(--border);color:var(--muted);padding:10px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
 .btn-logout:hover{border-color:var(--red);color:var(--red);}
+.suppl-card{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
+.suppl-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.suppl-icon{font-size:28px;}
+.suppl-name{font-size:16px;font-weight:700;}
+.suppl-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;}
+.suppl-badge.essentiel{background:rgba(0,208,132,.12);color:#00d084;}
+.suppl-badge.utile{background:rgba(14,165,233,.12);color:#0ea5e9;}
+.suppl-badge.optionnel{background:rgba(245,197,24,.12);color:#f5c518;}
+.suppl-detail{font-size:13px;color:var(--sub);line-height:1.7;}
+.suppl-dose{display:inline-block;background:var(--s2);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--text);margin-top:8px;}
+.safety-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:6px;}
+.safety-tag.safe{background:rgba(0,208,132,.1);color:#00d084;}
+.safety-tag.moderate{background:rgba(245,197,24,.1);color:#f5c518;}
+.safety-tag.advanced{background:rgba(232,52,28,.1);color:var(--red);}
+.chart-container{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;}
+.chart-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.progress-phase{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+.phase-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.phase-num{font-size:11px;font-weight:700;color:var(--red);}
+.phase-bar{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;}
+.phase-fill{height:100%;background:var(--red);border-radius:3px;transition:width .6s;}
+html.light .suppl-card{background:#fff;}
+html.light .chart-container{background:#fff;}
+html.light .progress-phase{background:#fff;}
+html.light .suppl-dose{background:#f5f5f5;}
 
 /* MAIN CONTENT */
 .main-content{margin-left:240px;flex:1;min-height:100vh;}
@@ -443,7 +469,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
         <div class="nav-item on" onclick="showView('dashboard')"><span class="nav-icon">🏠</span> Tableau de bord</div>
         <div class="nav-item" onclick="showView('programme')"><span class="nav-icon">📋</span> Mon Programme</div>
         <div class="nav-item" onclick="showView('new-programme')"><span class="nav-icon">✨</span> Nouveau Programme</div>
-        <div class="nav-item" onclick="showView('suivi')"><span class="nav-icon">📊</span> Suivi Hebdomadaire</div>
+        <div class="nav-item" onclick="showView('suivi')"><span class="nav-icon">📊</span> Suivi & Progression</div>
+        <div class="nav-item" onclick="showView('supplements')"><span class="nav-icon">💊</span> Suppléments</div>
         <div class="nav-item" onclick="showView('profile')"><span class="nav-icon">👤</span> Mon Profil</div>
       </nav>
       <div class="sidebar-footer">
@@ -557,7 +584,29 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
           <div class="form-label">Restrictions alimentaires</div>
           <div class="form-field"><input type="text" id="g-restrictions" placeholder="Ex: végétarien, sans gluten, halal... (optionnel)"></div>
 
-          <button class="btn-primary" style="width:100%;padding:16px;margin-top:8px;font-size:16px;" onclick="generateProgramme()">🚀 Générer mon programme</button>
+          <div class="form-label">Suppléments utilisés <span style="font-size:11px;color:var(--muted)">(optionnel)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-whey" style="accent-color:var(--red)"> 🥛 Whey Protéine
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-creatine" style="accent-color:var(--red)"> ⚡ Créatine
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-bcaa" style="accent-color:var(--red)"> 💊 BCAA
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-cafeine" style="accent-color:var(--red)"> ☕ Caféine / Pré-workout
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-omega3" style="accent-color:var(--red)"> 🐟 Oméga-3
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--s2);border-radius:10px;padding:10px 12px;font-size:13px;border:1.5px solid var(--border)">
+              <input type="checkbox" id="sup-vitd" style="accent-color:var(--red)"> ☀️ Vitamine D
+            </label>
+          </div>
+
+          <button class="btn-primary" style="width:100%;padding:16px;margin-top:8px;font-size:16px;" onclick="generateProgramme()">🚀 Générer mon programme 6 semaines</button>
         </div>
       </div>
 
@@ -664,6 +713,13 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
           </div>
           <button class="btn-save" onclick="saveProfile()" style="margin-top:8px">💾 Sauvegarder</button>
         </div>
+      </div>
+
+      <!-- SUPPLEMENTS VIEW -->
+      <div class="view" id="view-supplements">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;margin-bottom:6px">SUPPLÉMENTS</div>
+        <div style="font-size:13px;color:var(--sub);margin-bottom:24px">Conseils informatifs uniquement — consultez un professionnel de santé avant toute prise.</div>
+        <div id="suppl-content"></div>
       </div>
 
     </div><!-- end main-content -->
@@ -1011,52 +1067,136 @@ function renderNutrition(data) {
   document.getElementById('prog-nutrition').innerHTML = html;
 }
 
+let currentWeekDisplay = 1;
+
 function renderEntrainement(data, semaine) {
   const typeMap = {push:'b-push',pull:'b-pull',jambes:'b-legs',legs:'b-legs',full:'b-full','full body':'b-full'};
-  let html = '<div class="sessions-grid">';
-  data.entrainement.seances.forEach((s,si) => {
-    const typeKey = Object.keys(typeMap).find(k=>s.type.toLowerCase().includes(k));
-    const badgeCls = typeMap[typeKey]||'b-other';
-    html += `<div class="session-card">
-      <div class="session-head">
-        <div class="session-day">${s.jour}</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div class="session-badge ${badgeCls}">${s.type}</div>
-          <div class="session-check">
-            <button class="check-btn" id="check-${si}" onclick="toggleSeance(${si},'${s.jour}','${s.type}',${semaine})">✓</button>
-            <span style="font-size:11px">Fait</span>
-          </div>
-        </div>
-      </div>
-      <div class="ex-list">`;
-    s.exercices.forEach((e,ei) => {
-      const ytId = e.youtubeId || null;
-      const ytSection = ytId ? `
-        <div class="yt-thumb" onclick="openYoutube('${ytId}',this)">
-          <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${e.nom}" loading="lazy" style="border-radius:8px;width:100%;max-height:130px;object-fit:cover;">
-          <div class="yt-play"><div class="yt-play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div></div>
-        </div>` : '';
-      html += `<div class="ex-row">
-        <div class="ex-row-top">
-          <div class="ex-num">${ei+1}</div>
-          <div class="ex-info-wrap">
-            <div class="ex-name-txt">${e.nom}</div>
-            <div class="ex-muscle-txt">${e.muscle}</div>
-            <div class="ex-conseil-txt">${e.conseil}</div>
-          </div>
-          <div class="ex-badges">
-            <div class="ex-b">${e.series} × ${e.repetitions}</div>
-            <div class="ex-b">⏱ ${e.repos}</div>
-          </div>
-        </div>
-        ${ytSection}
+  const container = document.getElementById('prog-entrainement');
+
+  // Check if we have 6-week programme
+  const has6weeks = data.programme6semaines && data.programme6semaines.length > 0;
+  const seances = has6weeks
+    ? (data.programme6semaines[currentWeekDisplay-1]?.seances || data.entrainement?.seances || [])
+    : (data.entrainement?.seances || []);
+  const phaseInfo = has6weeks ? data.programme6semaines[currentWeekDisplay-1] : null;
+
+  let html = '';
+
+  // Supplements banner
+  if (data.resume?.supplements && data.resume.supplements.length > 0) {
+    html += `<div style="background:linear-gradient(135deg,rgba(232,52,28,.08),rgba(255,107,26,.04));border:1px solid rgba(232,52,28,.2);border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:var(--red)">💊 TES SUPPLÉMENTS</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px">`;
+    data.resume.supplements.forEach(s => {
+      html += `<div style="background:var(--s2);border-radius:10px;padding:10px 12px">
+        <div style="font-weight:700;font-size:13px">${s.nom}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">📏 ${s.dose} — ⏰ ${s.timing}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:4px">${s.conseil}</div>
       </div>`;
     });
     html += `</div></div>`;
-  });
+  }
+
+  // 6-week navigation
+  if (has6weeks) {
+    html += `<div style="margin-bottom:20px">
+      <div style="font-weight:700;font-size:13px;color:var(--sub);margin-bottom:10px">PROGRAMME 6 SEMAINES</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">`;
+    data.programme6semaines.forEach((sem, idx) => {
+      const isActive = idx+1 === currentWeekDisplay;
+      const phaseColors = { 'Adaptation':'#3b82f6', 'Progression':'#f59e0b', 'Intensification':'#ef4444', 'Peak':'#8b5cf6' };
+      const col = phaseColors[sem.phase] || 'var(--red)';
+      html += `<button onclick="switchWeek(${idx+1})" style="padding:8px 14px;border-radius:10px;border:2px solid ${isActive ? col : 'var(--border)'};background:${isActive ? col+'22' : 'transparent'};color:${isActive ? col : 'var(--muted)'};font-weight:700;font-size:12px;cursor:pointer;transition:.2s">
+        S${idx+1}<br><span style="font-size:10px;font-weight:400">${sem.phase}</span>
+      </button>`;
+    });
+    html += `</div>`;
+    if (phaseInfo) {
+      html += `<div style="margin-top:12px;background:var(--s1);border-radius:12px;padding:12px 16px;border-left:3px solid var(--red)">
+        <div style="font-weight:700;font-size:14px">Semaine ${currentWeekDisplay} — ${phaseInfo.phase}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">🎯 ${phaseInfo.objectif || ''}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Safety rules
+  if (data.reglesSecurite && data.reglesSecurite.length > 0) {
+    html += `<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:16px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#ef4444">🛡️ RÈGLES DE SÉCURITÉ</div>`;
+    data.reglesSecurite.forEach(r => {
+      html += `<div style="font-size:13px;color:var(--sub);margin-bottom:6px;display:flex;gap:8px"><span>•</span><span>${r}</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Sessions
+  html += '<div class="sessions-grid">';
+  if (!seances || seances.length === 0) {
+    html += `<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Données de cette semaine non générées.<br>Les séances de la semaine 1 servent de base.</div>`;
+  } else {
+    seances.forEach((s, si) => {
+      const typeKey = Object.keys(typeMap).find(k => s.type.toLowerCase().includes(k));
+      const badgeCls = typeMap[typeKey] || 'b-other';
+      html += `<div class="session-card">
+        <div class="session-head">
+          <div class="session-day">${s.jour}</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="session-badge ${badgeCls}">${s.type}</div>
+            <div class="session-check">
+              <button class="check-btn" id="check-${si}" onclick="toggleSeance(${si},'${s.jour}','${s.type}',${semaine})">✓</button>
+              <span style="font-size:11px">Fait</span>
+            </div>
+          </div>
+        </div>`;
+
+      // Echauffement du premier exercice
+      if (s.exercices && s.exercices[0]?.echauffement) {
+        html += `<div style="background:rgba(59,130,246,.08);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:12px;color:#60a5fa">
+          🔥 <strong>Échauffement:</strong> ${s.exercices[0].echauffement}
+        </div>`;
+      }
+
+      html += `<div class="ex-list">`;
+      if (s.exercices) {
+        s.exercices.forEach((e, ei) => {
+          const ytId = e.youtubeId || null;
+          const ytSection = ytId ? `
+            <div class="yt-thumb" onclick="openYoutube('${ytId}',this)">
+              <img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="${e.nom}" loading="lazy" style="border-radius:8px;width:100%;max-height:130px;object-fit:cover;">
+              <div class="yt-play"><div class="yt-play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="white"/></svg></div></div>
+            </div>` : '';
+
+          html += `<div class="ex-row">
+            <div class="ex-row-top">
+              <div class="ex-num">${ei+1}</div>
+              <div class="ex-info-wrap">
+                <div class="ex-name-txt">${e.nom}</div>
+                <div class="ex-muscle-txt">${e.muscle}</div>
+                <div class="ex-conseil-txt">${e.conseil}</div>
+                ${e.securite ? `<div style="font-size:11px;color:#f59e0b;margin-top:4px;background:rgba(245,158,11,.08);padding:4px 8px;border-radius:6px">${e.securite}</div>` : ''}
+              </div>
+              <div class="ex-badges">
+                <div class="ex-b">${e.series} × ${e.repetitions}</div>
+                <div class="ex-b">⏱ ${e.repos}</div>
+              </div>
+            </div>
+            ${ytSection}
+          </div>`;
+        });
+      }
+      html += `</div></div>`;
+    });
+  }
   html += '</div>';
-  document.getElementById('prog-entrainement').innerHTML = html;
+
+  container.innerHTML = html;
   loadSeanceStatus(semaine);
+}
+
+function switchWeek(weekNum) {
+  currentWeekDisplay = weekNum;
+  if (currentProgramme) renderEntrainement(currentProgramme.data, currentProgramme.semaine);
 }
 
 function openYoutube(ytId, el) {
@@ -1102,11 +1242,26 @@ function updateTrackerProgress() {
 
 function renderConseils(data) {
   const icons = ['💧','😴','📈','🎯','🧠','⚡','🔥','🍳'];
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
+  let html = '';
+
+  // Safety rules section
+  if (data.reglesSecurite && data.reglesSecurite.length > 0) {
+    html += `<div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:20px;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:14px;color:#ef4444">🛡️ PRÉVENTION DES BLESSURES</div>
+      <div style="display:grid;gap:8px">`;
+    data.reglesSecurite.forEach(r => {
+      html += `<div style="display:flex;gap:10px;align-items:flex-start;background:var(--s1);border-radius:10px;padding:10px 14px">
+        <span style="font-size:16px;flex-shrink:0">⚠️</span>
+        <span style="font-size:13px;color:var(--sub);line-height:1.6">${r}</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">';
   data.conseils.forEach((c,i) => {
     html += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:18px">
       <div style="font-size:26px;margin-bottom:10px">${icons[i%icons.length]}</div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:6px">Conseil ${i+1}</div>
       <div style="font-size:13px;color:var(--sub);line-height:1.6">${c}</div>
     </div>`;
   });
@@ -1136,6 +1291,16 @@ async function generateProgramme() {
   const niveau = document.querySelector('[name="g-niv"]:checked')?.value;
   const jours = document.querySelector('[name="g-jrs"]:checked')?.value;
   const restrictions = document.getElementById('g-restrictions').value;
+  const morphotype = user?.morphotype || '';
+
+  // Collect supplements
+  const supplements = [];
+  if (document.getElementById('sup-whey')?.checked) supplements.push('Whey Protéine');
+  if (document.getElementById('sup-creatine')?.checked) supplements.push('Créatine');
+  if (document.getElementById('sup-bcaa')?.checked) supplements.push('BCAA');
+  if (document.getElementById('sup-cafeine')?.checked) supplements.push('Caféine/Pré-workout');
+  if (document.getElementById('sup-omega3')?.checked) supplements.push('Oméga-3');
+  if (document.getElementById('sup-vitd')?.checked) supplements.push('Vitamine D');
 
   const err = document.getElementById('gen-err');
   if (!poids||!taille||!age||!sexe) { err.textContent='Remplis tes infos physiques'; err.classList.add('show'); return; }
@@ -1149,7 +1314,7 @@ async function generateProgramme() {
     let fullText = '';
     const response = await fetch('/api/programme/generate', {
       method:'POST', headers: authHeaders(),
-      body: JSON.stringify({ nom: user.nom, age, poids, taille, sexe, objectif, niveau, jours, restrictions })
+      body: JSON.stringify({ nom: user.nom, age, poids, taille, sexe, objectif, niveau, jours, restrictions, supplements, morphotype })
     });
 
     if (!response.ok) {
@@ -1197,21 +1362,31 @@ async function generateProgramme() {
 
 // ── SUIVI ──
 // ── THEME ──
+
+
+// ── SUIVI 6 SEMAINES ──
+// ── THEME ──
 function toggleTheme() {
   const isLight = document.documentElement.classList.toggle('light');
   localStorage.setItem('sf_theme', isLight ? 'light' : 'dark');
-  document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
-  document.getElementById('theme-label').textContent = isLight ? 'Mode sombre' : 'Mode clair';
+  document.getElementById('theme-btn').textContent = isLight ? '🌙 Mode nuit' : '☀️ Mode jour';
 }
 function initTheme() {
   const saved = localStorage.getItem('sf_theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isLight = saved === 'light' || (!saved && !prefersDark);
-  if (isLight) {
+  if (saved === 'light') {
     document.documentElement.classList.add('light');
-    document.getElementById('theme-icon').textContent = '🌙';
-    document.getElementById('theme-label').textContent = 'Mode sombre';
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '🌙 Mode nuit';
   }
+}
+
+// ── RESSENTI ──
+function setRessenti(btn, val) {
+  document.querySelectorAll('.ressenti-btn').forEach(b => {
+    b.style.background = 'var(--s2)'; b.style.border = '1px solid var(--border)'; b.style.color = 'var(--text)';
+  });
+  btn.style.background = 'rgba(232,52,28,.15)'; btn.style.border = '1px solid var(--red)'; btn.style.color = 'var(--red)';
+  document.getElementById('sv-ressenti').value = val;
 }
 
 // ── SUIVI 6 SEMAINES ──
@@ -1219,172 +1394,116 @@ async function loadSuivi() {
   try {
     const res = await fetch('/api/programme/suivi/history', { headers: authHeaders() });
     const data = await res.json();
+    const suivis = data.suivi || [];
+    const seancesLog = data.seances || [];
 
-    if (data.suivi.length > 0) {
-      const lastSemaine = Math.max(...data.suivi.map(s=>s.semaine));
-      document.getElementById('sv-semaine').value = Math.min(lastSemaine + 1, 6);
+    if (suivis.length > 0) {
+      const last = Math.max(...suivis.map(s => s.semaine));
+      document.getElementById('sv-semaine').value = Math.min(last + 1, 6);
     }
 
-    // Séances tracker
+    const nbSemaines = suivis.length;
+    const pct = Math.min((nbSemaines / 6) * 100, 100);
+    const cycleBar = document.getElementById('cycle-bar');
+    if (cycleBar) cycleBar.style.width = pct + '%';
+    const cycleTxt = document.getElementById('cycle-progress-txt');
+    if (cycleTxt) cycleTxt.textContent = `${nbSemaines} / 6 semaines`;
+
+    const badge = document.getElementById('suivi-progress-badge');
+    if (badge) { badge.style.display = 'block'; badge.textContent = nbSemaines >= 6 ? '🏆 Cycle terminé !' : `📅 Semaine ${nbSemaines + 1} / 6`; }
+
+    const dotsEl = document.getElementById('week-dots');
+    if (dotsEl) {
+      let dotsHtml = '';
+      for (let i = 1; i <= 6; i++) {
+        const done = suivis.some(s => s.semaine === i);
+        const isCurrent = i === nbSemaines + 1;
+        dotsHtml += `<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;${done ? 'background:var(--red);color:#fff' : isCurrent ? 'background:var(--s2);border:2px solid var(--red);color:var(--red)' : 'background:var(--s2);border:2px solid var(--border);color:var(--muted)'}">${i}</div>`;
+      }
+      dotsEl.innerHTML = dotsHtml;
+    }
+
+    const regenWrap = document.getElementById('regen-btn-wrap');
+    if (regenWrap) regenWrap.style.display = nbSemaines >= 6 ? 'block' : 'none';
+
     if (currentProgramme) {
       document.getElementById('seances-tracker').style.display = 'block';
       const semaine = currentSemaine;
-      const doneSeances = data.seances.filter(s=>s.semaine===semaine&&s.completee);
+      const doneSeances = seancesLog.filter(s => s.semaine === semaine && s.completee);
       let trackerHtml = '';
       currentProgramme.data.entrainement.seances.forEach(s => {
-        const isDone = doneSeances.some(d=>d.jour===s.jour);
-        trackerHtml += `<div class="seance-item ${isDone?'done':''}">
-          <div class="seance-check">${isDone?'✅':'⬜'}</div>
-          <div class="seance-item-day">${s.jour}</div>
-          <div class="seance-item-type">${isDone?'✓ Complétée':s.type}</div>
-        </div>`;
+        const isDone = doneSeances.some(d => d.jour === s.jour);
+        trackerHtml += `<div class="seance-item ${isDone ? 'done' : ''}"><div class="seance-check">${isDone ? '✅' : '⬜'}</div><div class="seance-item-day">${s.jour}</div><div class="seance-item-type">${isDone ? '✓ Complétée' : s.type}</div></div>`;
       });
       document.getElementById('seance-items').innerHTML = trackerHtml;
       const total = currentProgramme.data.entrainement.seances.length;
       document.getElementById('tracker-prog').textContent = `${doneSeances.length}/${total}`;
     }
 
-    // Progression badge
-    const nbSem = data.suivi.length;
-    if (nbSem > 0) {
-      const badge = document.getElementById('suivi-progress-badge');
-      badge.style.display = 'block';
-      badge.textContent = `Semaine ${nbSem}/6`;
-    }
-
-    // Graphique poids
-    renderWeightChart(data.suivi);
-
-    // Barres complétion
-    renderCompletionBars(data.suivi);
-
-    // Bilan 6 semaines
-    if (nbSem >= 6) renderBilan6Sem(data.suivi);
-
-    // Historique
-    if (data.suivi.length === 0) {
-      document.getElementById('history-body').innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Aucun suivi enregistré</td></tr>';
-      return;
-    }
-    let html = '';
-    data.suivi.forEach((s,i) => {
-      const prev = data.suivi[i-1];
-      let evo = '';
-      if (prev && s.poids && prev.poids) {
-        const diff = (s.poids - prev.poids).toFixed(1);
-        const cls = diff < 0 ? 'prog-down' : diff > 0 ? 'prog-up' : 'prog-same';
-        const arrow = diff < 0 ? '↓' : diff > 0 ? '↑' : '→';
-        evo = `<span class="progress-pill ${cls}">${arrow} ${Math.abs(diff)}kg</span>`;
+    const weeksGrid = document.getElementById('weeks-grid');
+    if (weeksGrid) {
+      if (suivis.length === 0) {
+        weeksGrid.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:20px 0;grid-column:1/-1">Aucune semaine enregistrée — enregistre ta première semaine ! 💪</div>';
+      } else {
+        let html = '';
+        suivis.forEach((s, i) => {
+          const prev = suivis[i - 1];
+          let poidsDiff = '';
+          if (prev && s.poids && prev.poids) {
+            const diff = (s.poids - prev.poids).toFixed(1);
+            const arrow = diff < 0 ? '↓' : diff > 0 ? '↑' : '→';
+            const color = diff < 0 ? 'var(--green)' : diff > 0 ? 'var(--orange)' : 'var(--muted)';
+            poidsDiff = `<span style="color:${color};font-weight:700;font-size:12px">${arrow}${Math.abs(diff)}kg</span>`;
+          }
+          html += `<div style="background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:var(--red)">SEMAINE ${s.semaine}</div>
+              <div style="font-size:12px;color:var(--muted)">${s.created_at ? new Date(s.created_at).toLocaleDateString('fr-FR') : ''}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div style="background:var(--s2);border-radius:8px;padding:8px;text-align:center">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:2px">POIDS</div>
+                <div style="font-weight:700;font-size:15px">${s.poids ? s.poids + 'kg' : '—'} ${poidsDiff}</div>
+              </div>
+              <div style="background:var(--s2);border-radius:8px;padding:8px;text-align:center">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:2px">SÉANCES</div>
+                <div style="font-weight:700;font-size:15px">${s.seances_faites || 0} / ${s.seances_total || '?'}</div>
+              </div>
+            </div>
+            ${s.notes ? `<div style="font-size:12px;color:var(--sub);font-style:italic;margin-top:6px">"${s.notes.replace(/"/g, "'")}"</div>` : ''}
+          </div>`;
+        });
+        weeksGrid.innerHTML = html;
       }
-      const score = calcWeekScore(s);
-      html += `<tr>
-        <td><b>S${s.semaine}</b></td>
-        <td>${s.poids ? s.poids+'kg' : '—'}</td>
-        <td>${evo || '—'}</td>
-        <td>${s.seances_faites||0} séances</td>
-        <td><span style="color:${score>=3?'var(--green)':score>=2?'var(--orange)':'var(--red)'};font-weight:700">${score}/4 ⭐</span></td>
-        <td style="color:var(--muted);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.notes||'—'}</td>
-      </tr>`;
-    });
-    document.getElementById('history-body').innerHTML = html;
-  } catch(e) { console.error(e); }
-}
+    }
 
-function calcWeekScore(s) {
-  let score = 0;
-  try { const n = JSON.parse(s.notes||'{}'); if(n.nutrition) score++; if(n.seances) score++; if(n.eau) score++; if(n.sommeil) score++; } catch {}
-  return score;
-}
+    const bilanEl = document.getElementById('bilan-6sem');
+    if (bilanEl && suivis.length >= 6) {
+      bilanEl.style.display = 'block';
+      const first = suivis[0];
+      const last6 = suivis[suivis.length - 1];
+      const poidsChange = first.poids && last6.poids ? (last6.poids - first.poids).toFixed(1) : null;
+      const totalSeances = suivis.reduce((acc, s) => acc + (s.seances_faites || 0), 0);
+      const avgSeances = (totalSeances / 6).toFixed(1);
+      document.getElementById('bilan-content').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+          <div style="background:var(--s2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted)">ÉVOLUTION</div>
+            <div style="font-size:20px;font-weight:800;color:${poidsChange < 0 ? 'var(--green)' : 'var(--red)'}">${poidsChange ? (poidsChange > 0 ? '+' : '') + poidsChange + 'kg' : '—'}</div>
+          </div>
+          <div style="background:var(--s2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted)">SÉANCES TOTAL</div>
+            <div style="font-size:20px;font-weight:800">${totalSeances}</div>
+          </div>
+          <div style="background:var(--s2);border-radius:10px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted)">MOY./SEM.</div>
+            <div style="font-size:20px;font-weight:800">${avgSeances}</div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--sub)">Cycle de 6 semaines terminé ! Génère un nouveau programme adapté à ta progression 💪</p>`;
+    }
 
-function renderWeightChart(suivi) {
-  const canvas = document.getElementById('weight-chart');
-  const empty = document.getElementById('weight-chart-empty');
-  const withWeight = suivi.filter(s => s.poids);
-  if (withWeight.length < 2) { canvas.style.display='none'; empty.style.display='block'; return; }
-  canvas.style.display='block'; empty.style.display='none';
-  const ctx = canvas.getContext('2d');
-  const W = canvas.offsetWidth || 600; canvas.width = W; canvas.height = 120;
-  const poids = withWeight.map(s=>s.poids);
-  const min = Math.min(...poids) - 1, max = Math.max(...poids) + 1;
-  const pad = { l:40, r:20, t:10, b:30 };
-  const chartW = W - pad.l - pad.r, chartH = 120 - pad.t - pad.b;
-  ctx.clearRect(0,0,W,120);
-  // Grid
-  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#2a2a2a';
-  ctx.lineWidth = 1;
-  [0,0.25,0.5,0.75,1].forEach(t => {
-    const y = pad.t + chartH * t;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+chartW, y); ctx.stroke();
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#555';
-    ctx.font = '10px DM Sans'; ctx.textAlign='right';
-    ctx.fillText((max - t*(max-min)).toFixed(1)+'kg', pad.l-4, y+4);
-  });
-  // Line
-  ctx.beginPath(); ctx.strokeStyle='#e8341c'; ctx.lineWidth=2.5; ctx.lineJoin='round';
-  withWeight.forEach((s,i) => {
-    const x = pad.l + (i/(withWeight.length-1)) * chartW;
-    const y = pad.t + ((max-s.poids)/(max-min)) * chartH;
-    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-  // Dots + labels
-  withWeight.forEach((s,i) => {
-    const x = pad.l + (i/(withWeight.length-1)) * chartW;
-    const y = pad.t + ((max-s.poids)/(max-min)) * chartH;
-    ctx.beginPath(); ctx.fillStyle='#e8341c'; ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#f0f0f0';
-    ctx.font='bold 10px DM Sans'; ctx.textAlign='center';
-    ctx.fillText(`S${s.semaine}`, x, 120-6);
-  });
-}
-
-function renderCompletionBars(suivi) {
-  const container = document.getElementById('completion-bars');
-  const empty = document.getElementById('completion-empty');
-  if (suivi.length === 0) { container.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-  const prog = currentProgramme?.data?.entrainement?.seances?.length || 3;
-  container.innerHTML = suivi.map(s => {
-    const pct = Math.min(100, Math.round(((s.seances_faites||0)/prog)*100));
-    const color = pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)';
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-        <span style="font-weight:600">Semaine ${s.semaine}</span>
-        <span style="color:${color};font-weight:700">${s.seances_faites||0}/${prog} séances (${pct}%)</span>
-      </div>
-      <div style="background:var(--s3);border-radius:20px;height:8px;overflow:hidden">
-        <div style="width:${pct}%;height:100%;background:${color};border-radius:20px;transition:.5s"></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderBilan6Sem(suivi) {
-  const bilan = document.getElementById('bilan-6sem');
-  const content = document.getElementById('bilan-content');
-  bilan.style.display = 'block';
-  const first = suivi[0], last = suivi[suivi.length-1];
-  const diffPoids = (first?.poids && last?.poids) ? (last.poids - first.poids).toFixed(1) : null;
-  const totalSeances = suivi.reduce((a,s) => a+(s.seances_faites||0), 0);
-  const avgCompletion = Math.round(totalSeances / (suivi.length * (currentProgramme?.data?.entrainement?.seances?.length||3)) * 100);
-  content.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
-      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:${diffPoids<0?'var(--green)':'var(--red)'}">${diffPoids!==null?(diffPoids>0?'+':'')+diffPoids+'kg':'—'}</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px">Évolution poids</div>
-      </div>
-      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:var(--orange)">${totalSeances}</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px">Séances complétées</div>
-      </div>
-      <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:22px;font-weight:800;color:${avgCompletion>=70?'var(--green)':'var(--orange)'}">${avgCompletion}%</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px">Taux complétion</div>
-      </div>
-    </div>
-    <div style="font-size:13px;color:var(--sub)">
-      ${avgCompletion>=80 ? '🔥 Excellent travail ! Tu es prêt pour un programme plus intense.' : avgCompletion>=50 ? '💪 Bon effort ! Continue sur cette lancée avec un nouveau programme.' : '📈 Progressons ensemble — un nouveau programme adapté t\'aidera à rester motivé.'}
-    </div>`;
+  } catch(e) { console.error('loadSuivi error:', e); }
 }
 
 async function saveSuivi() {
@@ -1392,21 +1511,28 @@ async function saveSuivi() {
   const poids = parseFloat(document.getElementById('sv-poids').value) || null;
   const calories_avg = parseFloat(document.getElementById('sv-calories').value) || null;
   const seances_faites = parseInt(document.getElementById('sv-seances').value) || 0;
-  const objNutrition = document.getElementById('sv-obj-nutrition').checked;
-  const objSeances = document.getElementById('sv-obj-seances').checked;
-  const objEau = document.getElementById('sv-obj-eau').checked;
-  const objSommeil = document.getElementById('sv-obj-sommeil').checked;
-  const notesText = document.getElementById('sv-notes').value;
-  const notesData = JSON.stringify({ nutrition:objNutrition, seances:objSeances, eau:objEau, sommeil:objSommeil, text:notesText });
+  const notes = document.getElementById('sv-notes').value;
+  const ressenti = document.getElementById('sv-ressenti')?.value || '';
+  const notesComplet = [ressenti, notes].filter(Boolean).join(' — ');
   try {
     const res = await fetch('/api/programme/suivi', {
-      method:'POST', headers: authHeaders(),
-      body: JSON.stringify({ semaine, poids, calories_avg, seances_faites, notes: notesData })
+      method: 'POST', headers: authHeaders(),
+      body: JSON.stringify({ semaine, poids, calories_avg, seances_faites, notes: notesComplet })
     });
-    if (res.ok) { toast('Semaine enregistrée ! 📊'); loadSuivi(); }
-  } catch(e) { toast('Erreur','err'); }
+    if (res.ok) {
+      toast('Semaine ' + semaine + ' enregistrée ! 📊');
+      document.getElementById('sv-poids').value = '';
+      document.getElementById('sv-calories').value = '';
+      document.getElementById('sv-seances').value = '';
+      document.getElementById('sv-notes').value = '';
+      if (document.getElementById('sv-ressenti')) document.getElementById('sv-ressenti').value = '';
+      document.querySelectorAll('.ressenti-btn').forEach(b => { b.style.background = 'var(--s2)'; b.style.border = '1px solid var(--border)'; b.style.color = 'var(--text)'; });
+      loadSuivi();
+    }
+  } catch(e) { toast('Erreur', 'err'); }
 }
 
+function generateNewCycle() { showView('new-programme'); toast('Génère un nouveau programme pour le prochain cycle ! 🚀'); }
 
 // ── PROFILE ──
 async function loadProfile() {

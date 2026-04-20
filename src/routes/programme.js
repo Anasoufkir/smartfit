@@ -78,7 +78,7 @@ function getYoutubeId(exerciseName, sexe) {
 
 // GENERATE PROGRAMME
 router.post('/generate', auth, async (req, res) => {
-  const { nom, age, poids, taille, sexe, objectif, niveau, jours, restrictions } = req.body;
+  const { nom, age, poids, taille, sexe, objectif, niveau, jours, restrictions, supplements, morphotype, poidsActuel, poidsObjectif } = req.body;
 
   const imc = (poids / ((taille / 100) ** 2)).toFixed(1);
   const bmr = sexe === 'homme'
@@ -89,14 +89,22 @@ router.post('/generate', auth, async (req, res) => {
   const calObj = objectif === 'perte' ? tdee - 400 : objectif === 'masse' ? tdee + 300 : tdee;
   const nbSeances = jours === 'sedentaire' ? 2 : jours === 'leger' ? 3 : jours === 'modere' ? 4 : 5;
 
-  const prompt = `Tu es un coach sportif et nutritionniste expert. Génère un programme complet en JSON UNIQUEMENT (pas de markdown).
+  const suppText = supplements && supplements.length > 0
+    ? `Suppléments utilisés: ${supplements.join(', ')}. Intègre les conseils de timing et dosage dans la nutrition.`
+    : 'Aucun supplément.';
+
+  const morphText = morphotype ? `Morphotype: ${morphotype}.` : '';
+
+  const prompt = `Tu es un coach sportif et nutritionniste expert. Génère un programme complet sur 6 semaines en JSON UNIQUEMENT (pas de markdown, pas de texte avant ou après).
 
 Profil: ${nom}, ${age} ans, ${poids}kg, ${taille}cm, ${sexe}, IMC:${imc}
 Objectif: ${objectif} | Niveau: ${niveau} | ${nbSeances} séances/semaine
-Restrictions: ${restrictions || 'aucune'}
+${morphText}
+Restrictions alimentaires: ${restrictions || 'aucune'}
+${suppText}
 Calories objectif: ${calObj} kcal | TDEE: ${tdee} kcal
 
-Retourne UNIQUEMENT ce JSON:
+Retourne UNIQUEMENT ce JSON valide:
 {
   "resume": {
     "calories": ${calObj},
@@ -104,15 +112,16 @@ Retourne UNIQUEMENT ce JSON:
     "glucides": 0,
     "lipides": 0,
     "imc": "${imc}",
-    "imcStatut": "",
-    "message": "message motivant personnalisé"
+    "imcStatut": "Normal/Surpoids/etc",
+    "message": "message motivant personnalisé 2-3 phrases",
+    "supplements": [{"nom": "Whey", "dose": "30g", "timing": "Post-entraînement", "conseil": "conseil spécifique"}]
   },
   "nutrition": {
     "repas": [
       {
         "nom": "Petit-déjeuner",
         "heure": "07h00",
-        "aliments": ["200g flocons d'avoine", "3 oeufs brouillés", "1 banane"],
+        "aliments": ["200g flocons d'avoine", "3 oeufs", "1 banane"],
         "calories": 0,
         "proteines": 0,
         "glucides": 0,
@@ -122,28 +131,78 @@ Retourne UNIQUEMENT ce JSON:
     "alimentsAutorise": ["8 aliments recommandés"],
     "alimentsInterdits": ["6 aliments à éviter"]
   },
-  "entrainement": {
-    "seances": [
-      {
-        "jour": "Lundi",
-        "type": "Push",
-        "exercices": [
-          {
-            "nom": "Développé couché",
-            "series": 4,
-            "repetitions": "8-10",
-            "repos": "90 sec",
-            "muscle": "Pectoraux",
-            "conseil": "Garde les coudes à 45 degrés"
-          }
-        ]
-      }
-    ]
-  },
+  "programme6semaines": [
+    {
+      "semaine": 1,
+      "phase": "Adaptation",
+      "objectif": "Maîtriser les mouvements avec charges légères",
+      "seances": [
+        {
+          "jour": "Lundi",
+          "type": "Push",
+          "exercices": [
+            {
+              "nom": "Développé couché",
+              "series": 3,
+              "repetitions": "12-15",
+              "repos": "90 sec",
+              "muscle": "Pectoraux",
+              "conseil": "Coudes à 45°, descente contrôlée sur 3 secondes",
+              "securite": "⚠️ Ne jamais verrouiller les coudes en haut. Utilise un spotter pour les charges lourdes.",
+              "echauffement": "10 pompes légères + rotations épaules avant de commencer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "semaine": 2,
+      "phase": "Adaptation",
+      "objectif": "Augmenter légèrement les charges (+2.5kg)",
+      "seances": []
+    },
+    {
+      "semaine": 3,
+      "phase": "Progression",
+      "objectif": "Charges +5-10%, focus sur la contraction musculaire",
+      "seances": []
+    },
+    {
+      "semaine": 4,
+      "phase": "Progression",
+      "objectif": "Volume augmenté, +1 série par exercice",
+      "seances": []
+    },
+    {
+      "semaine": 5,
+      "phase": "Intensification",
+      "objectif": "Surcharge progressive, techniques avancées",
+      "seances": []
+    },
+    {
+      "semaine": 6,
+      "phase": "Peak",
+      "objectif": "Test de force maximale et bilan final",
+      "seances": []
+    }
+  ],
+  "reglesSecurite": [
+    "Toujours s'échauffer 10 minutes avant chaque séance",
+    "Ne jamais sauter les jours de repos",
+    "Arrêter immédiatement si douleur articulaire aiguë",
+    "Progresser les charges de maximum 5-10% par semaine",
+    "Boire 500ml d'eau avant et pendant l'entraînement"
+  ],
   "conseils": ["conseil 1", "conseil 2", "conseil 3", "conseil 4", "conseil 5"]
 }
 
-Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au niveau ${niveau}. Inclus 6 repas.`;
+IMPORTANT: 
+- Génère des séances COMPLÈTES pour les semaines 1, 3 et 5 (les autres peuvent être vides)
+- Chaque exercice doit avoir: nom, series, repetitions, repos, muscle, conseil technique, securite (avec ⚠️), echauffement
+- Adapte les charges/reps selon la phase (semaines 1-2: reps hautes/charges légères, semaines 5-6: reps basses/charges lourdes)
+- Calcule les vrais macros précisément
+- Génère exactement ${nbSeances} séances pour la semaine 1
+- Adapte selon le morphotype ${morphotype || 'standard'}: ectomorphe=+calories, endomorphe=-calories, mésomorphe=équilibré`;
 
   try {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -152,8 +211,8 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
 
     let fullText = '';
     const stream = await client.messages.stream({
-      model: 'claude-opus-4-5',
-      max_tokens: 4000,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 6000,
       messages: [{ role: 'user', content: prompt }]
     });
 
@@ -164,31 +223,45 @@ Calcule les vrais macros. Génère exactement ${nbSeances} séances adaptées au
       }
     }
 
-    // Parse and add YouTube videos
+    // Parse and save
     try {
       const jsonMatch = fullText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const data = JSON.parse(jsonMatch[0]);
-        data.entrainement.seances.forEach(s => {
-          s.exercices.forEach(e => {
-            e.youtubeId = getYoutubeId(e.nom, sexe);
-          });
-        });
 
-        // Save to DB
+        // Add YouTube IDs to all weeks
+        if (data.programme6semaines) {
+          data.programme6semaines.forEach(sem => {
+            if (sem.seances) {
+              sem.seances.forEach(s => {
+                if (s.exercices) {
+                  s.exercices.forEach(e => {
+                    e.youtubeId = getYoutubeId(e.nom, sexe);
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        // Also keep backward compat with entrainement field
+        if (!data.entrainement && data.programme6semaines && data.programme6semaines[0]) {
+          data.entrainement = { seances: data.programme6semaines[0].seances || [] };
+        }
+
         const countRow = await db.get2('SELECT COUNT(*) as count FROM programmes WHERE user_id=?', [req.user.id]);
         const semaine = countRow.count + 1;
-        await db.run2('INSERT INTO programmes (user_id, semaine, data) VALUES (?,?,?)', [req.user.id, semaine, JSON.stringify(data)]);
+        await db.run2('INSERT INTO programmes (user_id, semaine, data) VALUES (?,?,?)',
+          [req.user.id, semaine, JSON.stringify(data)]);
 
-        // Update user profile
         await db.run2('UPDATE users SET age=?,poids=?,taille=?,sexe=?,objectif=?,niveau=?,jours=?,restrictions=? WHERE id=?',
           [age, poids, taille, sexe, objectif, niveau, jours, restrictions, req.user.id]);
 
-        // Init suivi for this week
         const existingSuivi = await db.get2('SELECT id FROM suivi WHERE user_id=? AND semaine=?', [req.user.id, semaine]);
         if (!existingSuivi) {
+          const nbSeancesTotal = data.entrainement?.seances?.length || nbSeances;
           await db.run2('INSERT INTO suivi (user_id, semaine, poids, seances_total) VALUES (?,?,?,?)',
-            [req.user.id, semaine, poids, data.entrainement.seances.length]);
+            [req.user.id, semaine, poids, nbSeancesTotal]);
         }
 
         res.write(`data: ${JSON.stringify({ done: true, programme: data, semaine })}\n\n`);
