@@ -9,61 +9,85 @@ function getDistance(lat1, lng1, lat2, lng2) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
 }
 
-// GET NEARBY GYMS
+function formatTime(minutes) {
+  if (minutes < 60) return `${Math.round(minutes)} min`;
+  const h = Math.floor(minutes/60);
+  const m = Math.round(minutes%60);
+  return m > 0 ? `${h}h${m.toString().padStart(2,'0')}` : `${h}h`;
+}
+
+// GET NEARBY GYMS via OpenStreetMap Overpass API (free, no key needed)
 router.get('/', async (req, res) => {
   const { lat, lng } = req.query;
   if (!lat || !lng) return res.status(400).json({ error: 'lat/lng manquants' });
 
-  const apiKey = process.env.GOOGLE_PLACES_KEY;
-
-  if (!apiKey) {
-    // Mode démo sans API key
-    return res.json({ gyms: getDemoGyms(parseFloat(lat), parseFloat(lng)), demo: true });
-  }
+  const userLat = parseFloat(lat);
+  const userLng = parseFloat(lng);
+  const radius = 5000; // 5km
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=5000&type=gym&key=${apiKey}&language=fr&rankby=prominence`;
-    const response = await fetch(url);
+    // Overpass API query — find gyms, fitness centers, sports clubs
+    const query = `
+      [out:json][timeout:15];
+      (
+        node["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
+        node["sport"="fitness"](around:${radius},${userLat},${userLng});
+        node["amenity"="gym"](around:${radius},${userLat},${userLng});
+        way["leisure"="fitness_centre"](around:${radius},${userLat},${userLng});
+        way["sport"="fitness"](around:${radius},${userLat},${userLng});
+      );
+      out center tags;
+    `;
+
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(query),
+      signal: AbortSignal.timeout(15000)
+    });
+
+    if (!response.ok) throw new Error('Overpass API error');
     const data = await response.json();
 
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      console.error('Google Places error:', data.status, data.error_message);
-      return res.json({ gyms: getDemoGyms(parseFloat(lat), parseFloat(lng)), demo: true });
-    }
+    const gyms = (data.elements || [])
+      .filter(el => el.tags?.name)
+      .map(el => {
+        const glat = el.lat || el.center?.lat;
+        const glng = el.lon || el.center?.lon;
+        const dist = getDistance(userLat, userLng, glat, glng);
+        
+        // Walking: 5 km/h average
+        const walkMin = (dist / 1000) / 5 * 60;
+        // Driving: 30 km/h in city average  
+        const driveMin = (dist / 1000) / 30 * 60 + 2; // +2 min parking
 
-    const gyms = (data.results || []).slice(0, 10).map(place => {
-      const dist = getDistance(parseFloat(lat), parseFloat(lng),
-        place.geometry.location.lat, place.geometry.location.lng);
-      let photoUrl = null;
-      if (place.photos?.[0]?.photo_reference) {
-        photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=${apiKey}`;
-      }
-      return {
-        place_id: place.place_id,
-        name: place.name,
-        vicinity: place.vicinity,
-        rating: place.rating || null,
-        user_ratings_total: place.user_ratings_total || 0,
-        opening_hours: place.opening_hours || null,
-        photo: photoUrl,
-        distance: dist,
-      };
-    }).sort((a, b) => a.distance - b.distance);
+        return {
+          id: el.id,
+          name: el.tags.name,
+          address: [el.tags['addr:street'], el.tags['addr:housenumber'], el.tags['addr:city']]
+            .filter(Boolean).join(' ') || el.tags['addr:full'] || '',
+          phone: el.tags.phone || el.tags['contact:phone'] || null,
+          website: el.tags.website || el.tags['contact:website'] || null,
+          opening_hours: el.tags.opening_hours || null,
+          lat: glat,
+          lng: glng,
+          distance: dist,
+          walkTime: formatTime(walkMin),
+          driveTime: formatTime(driveMin),
+          distanceKm: dist < 1000 ? dist + 'm' : (dist/1000).toFixed(1) + 'km',
+          mapsUrl: `https://www.google.com/maps/dir/?api=1&destination=${glat},${glng}&travelmode=walking`
+        };
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 12);
 
-    res.json({ gyms });
+    res.json({ gyms, source: 'openstreetmap' });
+
   } catch(e) {
-    console.error('Gyms fetch error:', e);
-    res.json({ gyms: getDemoGyms(parseFloat(lat), parseFloat(lng)), demo: true });
+    console.error('Gyms error:', e.message);
+    // Return empty with error message
+    res.json({ gyms: [], error: 'Impossible de charger les salles. Réessaie.' });
   }
 });
-
-function getDemoGyms(lat, lng) {
-  return [
-    { place_id: '1', name: 'Basic-Fit', vicinity: '200m de vous', rating: 4.1, user_ratings_total: 312, distance: 200, opening_hours: { open_now: true } },
-    { place_id: '2', name: 'Fitness Park', vicinity: '500m de vous', rating: 4.3, user_ratings_total: 187, distance: 500, opening_hours: { open_now: true } },
-    { place_id: '3', name: 'KeepCool', vicinity: '1.2km de vous', rating: 4.0, user_ratings_total: 95, distance: 1200, opening_hours: { open_now: false } },
-    { place_id: '4', name: 'Salle de Sport Locale', vicinity: '2km de vous', rating: 4.5, user_ratings_total: 56, distance: 2000, opening_hours: { open_now: true } },
-  ];
-}
 
 module.exports = router;
