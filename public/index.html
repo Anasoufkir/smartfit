@@ -782,18 +782,20 @@ html.light .suppl-dose{background:#f5f5f5;}
 <script>
 // ── STATE ──
 let token = localStorage.getItem('sf_token');
-let user = JSON.parse(localStorage.getItem('sf_user') || 'null');
+let user = null; // NEVER load user from localStorage - always fetch from API
 let currentProgramme = null;
 let currentSemaine = 1;
 
 // ── INIT ──
-window.onload = () => {
+window.onload = async () => {
   // Register Service Worker for PWA
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
       .then(() => console.log('SW registered'))
       .catch(e => console.log('SW error:', e));
   }
+
+  initTheme();
 
   initTheme();
 
@@ -806,26 +808,45 @@ window.onload = () => {
   if (googleError) {
     toast(googleError === 'google_cancelled' ? 'Connexion Google annulée' : 'Erreur de connexion Google', 'err');
     window.history.replaceState({}, '', '/');
-  } else if (googleToken && googleUserStr) {
+  } else if (googleToken) {
+    window.history.replaceState({}, '', '/');
+    token = googleToken;
+    localStorage.setItem('sf_token', token);
+    // Fetch fresh profile from API
     try {
-      const googleUser = JSON.parse(decodeURIComponent(googleUserStr));
-      token = googleToken;
-      user = googleUser;
-      localStorage.setItem('sf_token', token);
-      localStorage.setItem('sf_user', JSON.stringify(user));
-      window.history.replaceState({}, '', '/');
-      showApp();
-      // Check if has programme
-      fetch('/api/programme/latest/current', { headers: authHeaders() })
-        .then(r => r.ok ? (loadDashboard(), showView('dashboard')) : showView('new-programme'))
-        .catch(() => showView('new-programme'));
-      toast(`Bienvenue ${user.nom} ! 🎉`);
+      const res = await fetch('/api/user/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        user = await res.json();
+        showApp();
+        const progRes = await fetch('/api/programme/latest/current', { headers: authHeaders() });
+        if (progRes.ok) { loadDashboard(); showView('dashboard'); }
+        else showView('new-programme');
+        toast(`Bienvenue ${user.nom} ! 🎉`);
+      } else {
+        localStorage.removeItem('sf_token');
+        toast('Erreur de connexion Google', 'err');
+      }
     } catch(e) {
-      window.history.replaceState({}, '', '/');
+      localStorage.removeItem('sf_token');
     }
-  } else if (token && user) {
-    showApp();
-    loadDashboard();
+  } else if (token) {
+    // Always fetch fresh user from API
+    try {
+      const res = await fetch('/api/user/profile', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        user = await res.json();
+        showApp();
+        loadDashboard();
+      } else {
+        // Token invalid - clear everything
+        localStorage.removeItem('sf_token');
+        token = null;
+      }
+    } catch(e) {
+      // Network error - try anyway
+      showApp();
+      loadDashboard();
+    }
   }
 
   const dateEl = document.getElementById('dash-date');
@@ -902,9 +923,23 @@ async function doLogin() {
 
 async function loginSuccess(data) {
   token = data.token;
-  user = data.user;
+  // Only store token in localStorage - NEVER store user data
   localStorage.setItem('sf_token', token);
-  localStorage.setItem('sf_user', JSON.stringify(user));
+  
+  // Always fetch fresh user data from API
+  try {
+    const res = await fetch('/api/user/profile', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.ok) {
+      user = await res.json();
+    } else {
+      user = data.user;
+    }
+  } catch {
+    user = data.user;
+  }
+
   closeModal();
   showApp();
 
@@ -912,11 +947,9 @@ async function loginSuccess(data) {
   try {
     const res = await fetch('/api/programme/latest/current', { headers: authHeaders() });
     if (res.ok) {
-      // Has programme → go to dashboard
       loadDashboard();
       showView('dashboard');
     } else {
-      // No programme → go directly to new programme page
       showView('new-programme');
       toast(`Bienvenue ${user.nom} ! Crée ton premier programme 💪`);
     }
@@ -1891,7 +1924,7 @@ async function saveProfile() {
     const res = await fetch('/api/user/profile', { method:'PUT', headers: authHeaders(), body: JSON.stringify(body) });
     if (res.ok) {
       user.nom = body.nom;
-      localStorage.setItem('sf_user', JSON.stringify(user));
+      
       updateSidebarUser();
       toast('Profil mis à jour ! ✅');
     }
@@ -1911,7 +1944,7 @@ async function uploadAvatar(input) {
     const data = await res.json();
     if (data.avatar) {
       user.avatar = data.avatar;
-      localStorage.setItem('sf_user', JSON.stringify(user));
+      
       updateSidebarUser();
       loadProfile();
       toast('Photo mise à jour ! 📷');
