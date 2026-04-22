@@ -1177,10 +1177,29 @@ window.addEventListener('appinstalled', () => {
   toast('SmartFit installé sur ton téléphone ! 🎉');
 });
 
-function doLogout() {
-  localStorage.removeItem('sf_token');
-  localStorage.removeItem('sf_user');
-  location.reload();
+async function doLogout() {
+  // Clear localStorage
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Clear all caches (PWA cache)
+  if ('caches' in window) {
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    } catch(e) {}
+  }
+  
+  // Unregister service worker
+  if ('serviceWorker' in navigator) {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    } catch(e) {}
+  }
+  
+  // Force full reload bypass cache
+  window.location.href = '/?logout=' + Date.now();
 }
 
 // ── APP ──

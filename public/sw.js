@@ -1,48 +1,66 @@
-const CACHE_NAME = 'smartfit-v2';
+const CACHE_NAME = 'smartfit-v4';
 const STATIC_ASSETS = [
-  '/',
-  '/manifest.json',
   '/favicon.svg',
-  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700;800&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+  '/manifest.json'
 ];
 
-// Install — cache static assets
+// Install
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {});
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS).catch(() => {}))
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate — clean ALL old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+      Promise.all(keys.map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch — network first, cache fallback
+// Fetch strategy
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   
-  // Don't cache API calls
-  if (url.pathname.startsWith('/api/')) return;
-  
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
+  // NEVER cache anything from /api/ — always fresh, never cached
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request, { 
+        credentials: 'same-origin',
+        cache: 'no-store'
       })
-      .catch(() => caches.match(event.request))
-  );
+    );
+    return;
+  }
+  
+  // NEVER cache the main HTML page (it contains user-specific data)
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .catch(() => caches.match('/'))
+    );
+    return;
+  }
+  
+  // Only cache truly static assets (icons, images)
+  if (url.pathname.startsWith('/icons/') || url.pathname === '/favicon.svg' || url.pathname === '/manifest.json') {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        return cached || fetch(event.request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+  
+  // Everything else: network first, no caching of sensitive content
+  event.respondWith(fetch(event.request));
 });
